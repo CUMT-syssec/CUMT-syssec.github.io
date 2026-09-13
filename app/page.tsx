@@ -32,7 +32,6 @@ export default function Home() {
             cohorts={outcomeCohorts}
             internshipOrgIds={internshipOrgIds}
             organizations={organizations}
-            lastVerified={site.lastVerified}
           />
           <Publications publications={publications} />
         </div>

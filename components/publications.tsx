@@ -9,7 +9,7 @@ import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
 
 /**
- * 科研成果：完整文献清单，同一连续列表，按正式发表年份从新到旧。
+ * 科研成果：代表性论文清单，同一连续列表，按正式发表年份从新到旧。
  * 不截断标题、不省略作者、不用轮播、不做营销式陈列。
  */
 export function Publications({ publications }: { publications: Publication[] }) {
@@ -24,7 +24,7 @@ export function Publications({ publications }: { publications: Publication[] }) 
       <SectionHeading
         id="publications-title"
         title="科研成果"
-        sub="按正式发表年份从新到旧排列。"
+        sub="围绕系统安全问题，构建可验证、可落地的研究成果。"
       />
       <Reveal delay={60}>
         <ol>
@@ -80,7 +80,7 @@ export function Publications({ publications }: { publications: Publication[] }) 
           ))}
         </ol>
         <p className="mt-8 text-[13px] text-aux">
-          加粗为实验室成员；* 为通讯作者（仅在来源明确时标注）。
+          加粗为实验室成员；* 为通讯作者。
         </p>
       </Reveal>
     </section>

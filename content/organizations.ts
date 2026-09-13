@@ -12,6 +12,7 @@ export const organizations: Organization[] = [
   { id: "hkust-gz", name: "香港科技大学（广州）", kind: "高校" },
   { id: "xmu", name: "厦门大学", kind: "高校" },
   { id: "buaa", name: "北京航空航天大学", kind: "高校" },
+  { id: "nudt", name: "国防科技大学", kind: "高校" },
   { id: "zju", name: "浙江大学", kind: "高校" },
   { id: "ustc", name: "中国科学技术大学", kind: "高校" },
   { id: "sjtu", name: "上海交通大学", kind: "高校" },

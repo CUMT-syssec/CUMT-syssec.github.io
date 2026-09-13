@@ -3,7 +3,7 @@ import { CopyEmail } from "./copy-email";
 import { Reveal } from "./reveal";
 
 /**
- * 联系我们：一段简短邀请 + 确认过的适用人群 + 一个主要联系动作（邮箱）。
+ * 联系我们：简短邀请、适用人群与邮箱。
  * 邮箱文字直接可见、可选择复制；复制按钮只是增强。
  */
 export function Contact({ site }: { site: SiteInfo }) {

@@ -10,7 +10,7 @@ export const site: SiteInfo = {
   zhName: "系统安全实验室",
   affiliation: "中国矿业大学 计算机科学与技术学院/人工智能学院",
   directions: ["系统安全与优化", "虚拟化", "云计算安全", "Agent 安全"],
-  email: "liyg@cumt.edu.cn",
+  email: "gdd@cumt.edu.cn",
   audience: [
     "课题组长期招募优秀博士毕业生",
     "欢迎志在体系结构与系统安全方向研究的研究生加入",
@@ -18,10 +18,6 @@ export const site: SiteInfo = {
   ],
   footerLinks: [
     { label: "学院主页", href: "https://cs.cumt.edu.cn" },
-    {
-      label: "教师主页",
-      href: "https://faculty.cumt.edu.cn/LYG1234/zh_CN/index.htm",
-    },
     { label: "GitHub", href: "https://github.com/CUMT-syssec" },
   ],
   lastVerified: "2026-09-13",

@@ -17,7 +17,7 @@ import type { CohortOutcomes } from "@/lib/types";
 export const outcomeCohorts: CohortOutcomes[] = [
   { cohort: 2024, stage: "final", orgIds: ["pku", "cuhk"] },
   { cohort: 2025, stage: "final", orgIds: ["nju", "hkust-gz", "xmu"] },
-  { cohort: 2026, stage: "final", orgIds: ["buaa"] },
+  { cohort: 2026, stage: "final", orgIds: ["buaa", "nudt"] },
   { cohort: 2027, stage: "current", orgIds: ["zju", "ustc", "sjtu"] },
 ];
 

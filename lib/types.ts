@@ -16,7 +16,7 @@ export interface SiteInfo {
   affiliation: string;
   /** 2—4 个真实研究方向 */
   directions: string[];
-  /** 唯一主要联系方式（邮箱） */
+  /** 联系邮箱 */
   email: string;
   /** 适用人群说明（经确认后填写） */
   audience: string[];
@@ -39,7 +39,7 @@ export interface Teacher {
   roles: string[];
   /** 研究方向 */
   directions: string[];
-  /** 简介（约 100—160 中文字，左对齐段落） */
+  /** 简短介绍（左对齐段落） */
   bio: string;
   /** 授权肖像；没有授权照片时置空，版式自动省略 */
   photo?: { src: string; alt: string };

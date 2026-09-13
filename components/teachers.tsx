@@ -1,13 +1,8 @@
-import Image from "next/image";
 import type { Teacher } from "@/lib/types";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
 
-/**
- * 主要教师：单列依次排列。
- * 内容顺序固定：肖像 → 姓名 → 职务与身份 → 研究方向 → 简介 → 外部链接。
- * 姓名职务居中，简介放在居中窄容器里、段落左对齐。
- */
+/** 主要教师：同级并列的简短介绍，桌面双列、手机单列。 */
 export function Teachers({ teachers }: { teachers: Teacher[] }) {
   return (
     <section id="teachers" aria-labelledby="teachers-title" className="scroll-mt-8">
@@ -16,36 +11,22 @@ export function Teachers({ teachers }: { teachers: Teacher[] }) {
         title="主要教师"
         sub="认识与你一起做研究的人。"
       />
-      <div className="space-y-20 md:space-y-24">
+      <div className="grid gap-x-10 gap-y-10 md:grid-cols-2">
         {teachers.map((t) => (
-          <Reveal key={t.id}>
-            <article className="flex flex-col items-center text-center">
-              {t.photo && (
-                <Image
-                  src={t.photo.src}
-                  alt={t.photo.alt}
-                  width={248}
-                  height={298}
-                  className="aspect-[4/5] w-[200px] rounded-[20px] object-cover md:w-[248px]"
-                  priority
-                />
-              )}
-              <h3 className="mt-8 text-[1.625rem] font-semibold md:text-[1.875rem]">
-                {t.name}
-              </h3>
-              <p className="mt-3 text-sm text-aux md:text-[15px]">
+          <Reveal key={t.id} className="min-w-0">
+            <article className="flex h-full flex-col border-t border-ink/15 pt-6 text-left">
+              <h3 className="text-2xl font-semibold">{t.name}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-aux">
                 {t.roles.join(" · ")}
               </p>
-              <p className="mt-2 text-sm text-aux md:text-[15px]">
+              <p className="mt-4 text-sm leading-[1.75] text-ink">
                 研究方向：{t.directions.join("、")}
               </p>
-              <div className="mt-6 max-w-[680px] text-left">
-                <p className="text-base leading-[1.8] text-body md:text-[17px]">
-                  {t.bio}
-                </p>
-              </div>
+              <p className="mt-3 text-[15px] leading-[1.8] text-body">
+                {t.bio}
+              </p>
               {t.links.length > 0 && (
-                <ul className="mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-[15px]">
+                <ul className="mt-auto flex flex-wrap gap-x-5 gap-y-2 pt-5 text-sm">
                   {t.links.map((l) => (
                     <li key={l.href}>
                       <a

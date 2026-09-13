@@ -1,26 +1,70 @@
 import type { Teacher } from "@/lib/types";
 
-/**
- * 主要教师。内容来源见 docs/content-inventory.md。
- * 照片取自其官方教师主页；若不许可使用，删除 public 下图片并将 photo 置空即可。
- */
+/** 主要教师：2026-09-13 履历按各条目官方页面核实；职称展示按实验室要求统一为“副教授”。 */
 export const teachers: Teacher[] = [
   {
     id: "li-yonggang",
     name: "李勇钢",
-    roles: ["副教授", "硕士生导师", "网络空间安全系主任"],
+    roles: ["副教授", "网络空间安全系主任"],
     directions: ["系统安全与优化", "云计算安全", "虚拟化"],
-    bio: "李勇钢，2019 年博士毕业于中国科学技术大学，之后在香港中文大学（深圳）从事博士后研究，并在深圳市人工智能与机器人研究院担任助理研究员。研究聚焦系统安全与优化、云计算安全与虚拟化，围绕内核完整性检测、代码探测感知和闭源软件控制流完整性保护等方向构建了多个安全系统，成果发表于 IEEE S&P、ACM CCS、IEEE TC 等会议与期刊，获 ACM CCS 杰出论文奖、江苏省网络空间安全学会青年科技奖。",
-    photo: {
-      src: "/images/teachers/liyonggang.png",
-      alt: "李勇钢肖像",
-    },
+    bio: "中国科学技术大学博士，曾在香港中文大学（深圳）从事博士后研究。围绕内核完整性检测、代码探测感知和控制流保护开展系统安全研究。",
     links: [
       {
-        label: "学校教师主页",
+        label: "教师主页",
         href: "https://faculty.cumt.edu.cn/LYG1234/zh_CN/index.htm",
       },
-      { label: "邮箱", href: "mailto:liyg@cumt.edu.cn" },
+    ],
+  },
+  {
+    id: "liu-shang",
+    name: "刘上",
+    roles: ["副教授", "网络空间安全系副主任"],
+    directions: ["隐私安全", "差分隐私", "图分析", "大语言模型"],
+    bio: "日本京都大学博士，主要开展隐私安全、差分隐私、图分析与大语言模型相关研究，关注数据分析与智能计算中的隐私保护问题。",
+    links: [
+      {
+        label: "教师主页",
+        href: "https://cs.cumt.edu.cn/info/1100/6950.htm",
+      },
+    ],
+  },
+  {
+    id: "cao-shujiao",
+    name: "曹书蛟",
+    roles: ["副教授"],
+    directions: ["量子密码学", "量子复杂性", "量子安全协议"],
+    bio: "本科毕业于中国科学技术大学，博士毕业于中国科学院信息工程研究所。主要研究量子密码学及其理论基础，涉及量子复杂性与量子安全协议。",
+    links: [
+      {
+        label: "教师主页",
+        href: "https://cs.cumt.edu.cn/info/1100/6114.htm",
+      },
+    ],
+  },
+  {
+    id: "ma-zhenguo",
+    name: "马振国",
+    roles: ["副教授"],
+    directions: ["边缘智能网络", "联邦学习"],
+    bio: "2023 年获中国科学技术大学计算机学院工学博士学位，主要从事边缘智能网络与联邦学习等领域的研究，关注网络与智能计算的结合。",
+    links: [
+      {
+        label: "教师主页",
+        href: "https://faculty.cumt.edu.cn/cs_zgma/zh_CN/index.htm",
+      },
+    ],
+  },
+  {
+    id: "bao-yu",
+    name: "鲍宇",
+    roles: ["副教授"],
+    directions: ["人工智能与异常检测", "深度学习模型约简", "智能网络安全"],
+    bio: "同济大学计算机软件与理论博士，研究涉及人工智能与异常检测、深度学习模型约简、智能网络安全，以及深度可信物联系统。",
+    links: [
+      {
+        label: "教师主页",
+        href: "https://faculty.cumt.edu.cn/BY12/zh_CN/index.htm",
+      },
     ],
   },
 ];
