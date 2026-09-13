@@ -1,0 +1,123 @@
+@import "tailwindcss";
+
+@theme {
+  /* 配色基线：深色封面、浅色档案、深色收尾 */
+  --color-night: #080b12; /* 首屏、文化、页脚背景 */
+  --color-panel: #101621; /* 深色局部面板 */
+  --color-paper: #f6f7f9; /* 连续浅色正文背景 */
+  --color-surface: #ffffff; /* 学生条目与弹窗表面 */
+  --color-ink: #151b26; /* 浅底主要文字 */
+  --color-body: #4f5c6e; /* 浅底正文与次要文字 */
+  --color-aux: #596579; /* 浅底辅助信息 */
+  --color-accent: #315ec9; /* 浅底链接与强调 */
+  --color-snow: #f5f7fb; /* 深底主要文字 */
+  --color-mist: #b4bdcc; /* 深底次要文字 */
+  --color-sky: #91b7ff; /* 深底链接与强调 */
+
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans SC", sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  /* 首屏为深色，避免加载时白闪；不作为 .bg-night 作用域标记 */
+  background-color: var(--color-night);
+}
+
+::selection {
+  background: rgb(49 94 201 / 0.18);
+}
+
+/* 所有可交互元素都有清楚的键盘焦点状态 */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+.bg-night :focus-visible {
+  outline-color: var(--color-sky);
+}
+
+/* ---------- 首屏：深色底、极弱网格、一道柔光 ---------- */
+
+.hero-grid {
+  background-image:
+    linear-gradient(to right, rgb(145 183 255 / 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(145 183 255 / 0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+  /* 仅在标题附近略微可见，向边缘消退 */
+  mask-image: radial-gradient(
+    ellipse 88% 68% at 50% 40%,
+    black 15%,
+    transparent 72%
+  );
+}
+
+.spotlight {
+  background: radial-gradient(
+    ellipse 46% 38% at 66% 6%,
+    rgb(145 183 255 / 0.14),
+    transparent 68%
+  );
+  animation: spotlight-in 0.9s ease-out both;
+}
+
+@keyframes spotlight-in {
+  from {
+    opacity: 0;
+    transform: translateX(-2.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 主标题从首帧就可读：仅 8px 轻微归位，不做透明渐变 */
+.brand-settle {
+  animation: brand-settle 0.55s ease-out both;
+}
+
+@keyframes brand-settle {
+  from {
+    transform: translateY(8px);
+  }
+  to {
+    transform: none;
+  }
+}
+
+/* ---------- 减少动态效果：CSS 侧统一收口 ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .spotlight,
+  .brand-settle {
+    animation: none;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* 打印/未触发动效时内容必须完整（inline 样式也可被 !important 覆盖） */
+@media print {
+  [style] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+}
