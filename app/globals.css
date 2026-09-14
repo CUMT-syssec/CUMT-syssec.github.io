@@ -10,7 +10,7 @@
   --color-body: #4f5c6e; /* 浅底正文与次要文字 */
   --color-aux: #596579; /* 浅底辅助信息 */
   --color-accent: #315ec9; /* 浅底链接与强调 */
-  --color-brand: #2b5f8e; /* 首页主标题主体色 */
+  --color-brand: #0561d1; /* 首页主标题主体色（与 Aurora 极光首色一致） */
   --color-snow: #f5f7fb; /* 深底主要文字 */
   --color-mist: #b4bdcc; /* 深底次要文字 */
   --color-sky: #91b7ff; /* 深底链接与强调 */
@@ -23,15 +23,13 @@
     ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
 
-html {
-  scroll-behavior: smooth;
-}
+/* 平滑滚动交给 Lenis（ScrollStack），CSS scroll-behavior 与其互斥 */
 
 body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  /* 首屏为深色，避免加载时白闪；不作为 .bg-night 作用域标记 */
-  background-color: var(--color-night);
+  /* 白色舞台：衬托白色卡片的圆角、描边与投影 */
+  background-color: var(--color-paper);
 }
 
 ::selection {
@@ -48,54 +46,19 @@ body {
   outline-color: var(--color-sky);
 }
 
-/* ---------- 首屏：深色底、极弱网格、一道柔光 ---------- */
-
-.hero-grid {
-  background-image:
-    linear-gradient(to right, rgb(145 183 255 / 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(145 183 255 / 0.04) 1px, transparent 1px);
-  background-size: 72px 72px;
-  /* 仅在标题附近略微可见，向边缘消退 */
-  mask-image: radial-gradient(
-    ellipse 88% 68% at 50% 40%,
-    black 15%,
-    transparent 72%
-  );
-}
-
-.spotlight {
-  background: radial-gradient(
-    ellipse 46% 38% at 66% 6%,
-    rgb(145 183 255 / 0.14),
-    transparent 68%
-  );
-  animation: spotlight-in 0.9s ease-out both;
-}
+/* ---------- 首屏：ASCII 字符流体层 ---------- */
 
 .hero-ascii-fluid {
-  /* 浅色 Aurora 底上字符用深蓝 #0561D1 */
-  color: #0561d1;
-  mask-image: linear-gradient(#000 0, #000 480px, transparent 1200px);
-  -webkit-mask-image: linear-gradient(
-    #000 0,
-    #000 480px,
-    transparent 1200px
-  );
+  /* 字符色走品牌 token（首屏标题同色系） */
+  color: var(--color-brand);
+  /* 遮罩用卡片高度百分比：不同视口下纹理分布一致，
+     避免固定像素在矮卡里把纹理压在上半 */
+  mask-image: linear-gradient(#000 0, #000 40%, transparent 88%);
+  -webkit-mask-image: linear-gradient(#000 0, #000 40%, transparent 88%);
   mask-repeat: no-repeat;
   -webkit-mask-repeat: no-repeat;
   mask-size: 100% 100%;
   -webkit-mask-size: 100% 100%;
-}
-
-@keyframes spotlight-in {
-  from {
-    opacity: 0;
-    transform: translateX(-2.5rem);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
 }
 
 /* 主标题从首帧就可读：仅 8px 轻微归位，不做透明渐变 */
@@ -112,13 +75,39 @@ body {
   }
 }
 
+/* ---------- 幻灯片版式：ScrollStack 卡片 ---------- */
+
+/* 卡片本体高度接近一屏；极矮视口保底，超出部分卡内滚动。
+   contain: paint 强化圆角对子内容的裁剪（配合背景层自身的裁剪器） */
+.site-slide {
+  height: 92svh;
+  min-height: 540px;
+  overflow: hidden;
+  contain: paint;
+}
+
+.site-slide--paper {
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+/* 卡内正文容器：内容放不下时内部滚动（Lenis allowNestedScroll 放行）。
+   overscroll-behavior 保持默认 auto：滚到卡底后滚动链回窗口，牌组才能继续推进。
+   flex + 内容块 margin-block:auto = 安全垂直居中：放得下时居中（与首屏一致），
+   放不下时自动顶对齐进入卡内滚动，不会裁掉顶部。 */
+.site-slide-body {
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
 /* ---------- 减少动态效果：CSS 侧统一收口 ---------- */
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  .spotlight,
   .brand-settle,
   .hero-ascii-fluid {
     animation: none;

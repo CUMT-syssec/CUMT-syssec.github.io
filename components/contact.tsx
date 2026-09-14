@@ -11,32 +11,30 @@ export function Contact({ site }: { site: SiteInfo }) {
     <section
       id="contact"
       aria-labelledby="contact-title"
-      className="scroll-mt-8 border-t border-white/8"
+      className="scroll-mt-8 text-center"
     >
-      <div className="mx-auto max-w-[880px] px-6 py-[64px] text-center md:py-[96px]">
-        <Reveal>
-          <h2
-            id="contact-title"
-            className="mx-auto max-w-[680px] text-[clamp(1.5rem,3.5vw,2.25rem)] leading-[1.35] font-semibold"
+      <Reveal>
+        <h2
+          id="contact-title"
+          className="mx-auto max-w-[680px] text-[clamp(1.5rem,3.5vw,2.25rem)] leading-[1.35] font-semibold text-balance"
+        >
+          对这些研究问题感兴趣，欢迎交流。
+        </h2>
+        <ul className="mx-auto mt-8 max-w-[560px] space-y-2 text-[15px] leading-[1.75] text-body">
+          {site.audience.map((a) => (
+            <li key={a}>{a}</li>
+          ))}
+        </ul>
+        <div className="mt-10 flex flex-col items-center gap-4">
+          <a
+            href={`mailto:${site.email}`}
+            className="rounded-full bg-accent px-7 py-3 font-mono text-[15px] font-semibold text-white transition-colors hover:bg-ink"
           >
-            对这些研究问题感兴趣，欢迎交流。
-          </h2>
-          <ul className="mt-8 space-y-2 text-[15px] leading-[1.75] text-mist">
-            {site.audience.map((a) => (
-              <li key={a}>{a}</li>
-            ))}
-          </ul>
-          <div className="mt-10 flex flex-col items-center gap-4">
-            <a
-              href={`mailto:${site.email}`}
-              className="rounded-full bg-sky px-7 py-3 font-mono text-[15px] font-semibold text-night transition-colors hover:bg-snow focus-visible:outline-snow"
-            >
-              {site.email}
-            </a>
-            <CopyEmail email={site.email} />
-          </div>
-        </Reveal>
-      </div>
+            {site.email}
+          </a>
+          <CopyEmail email={site.email} />
+        </div>
+      </Reveal>
     </section>
   );
 }

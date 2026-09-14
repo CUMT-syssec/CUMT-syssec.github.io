@@ -28,7 +28,7 @@ export function CopyEmail({ email }: { email: string }) {
     <button
       type="button"
       onClick={copy}
-      className="inline-flex items-center gap-1.5 rounded-full border border-sky/40 px-4 py-1.5 text-sm text-sky transition-colors hover:border-sky hover:text-snow"
+      className="inline-flex items-center gap-1.5 rounded-full border border-accent/40 px-4 py-1.5 text-sm text-accent transition-colors hover:border-accent hover:text-ink"
       aria-live="polite"
     >
       {state === "ok" ? "已复制" : state === "fail" ? "复制失败，请手动复制" : "复制邮箱"}

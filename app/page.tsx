@@ -14,34 +14,70 @@ import { Publications } from "@/components/publications";
 import { Culture } from "@/components/culture";
 import { Contact } from "@/components/contact";
 import { Footer } from "@/components/footer";
+import ScrollStack, { ScrollStackItem } from "@/components/scroll-stack";
 
 /**
- * 唯一主页面：只负责组装。
- * 阅读顺序固定：首屏 → 主要教师 → 学生去向 → 科研成果 → 我们如何做研究 → 联系 → 页脚。
- * 两次明度切换：深色首屏 → 浅色档案（教师/学生/论文） → 深色收尾（文化/联系/页脚）。
+ * 唯一主页面：幻灯片式整页体验，白色风格。
+ * 六张接近全屏的白色卡片：首屏（Aurora + ASCII 流体）→ 教师 → 去向 → 论文 → 文化 → 联系+页脚。
+ * 滚动时新卡从下方滑入盖住旧卡、旧卡缩小退层，形成牌组式翻页（ScrollStack + Lenis 平滑滚动）。
+ * 布局约定：正文容器统一 max-w-[880px]；内容块 my-auto 垂直居中（放不下自动顶对齐滚动）。
  */
 export default function Home() {
   return (
     <main id="top">
-      <Hero site={site} />
+      <ScrollStack>
+        <ScrollStackItem itemClassName="site-slide site-slide--paper">
+          <Hero site={site} />
+        </ScrollStackItem>
 
-      <div className="bg-paper text-ink">
-        <div className="mx-auto max-w-[880px] space-y-[72px] px-6 py-[64px] md:space-y-[112px] md:py-[104px]">
-          <Teachers teachers={teachers} />
-          <Outcomes
-            cohorts={outcomeCohorts}
-            internshipOrgIds={internshipOrgIds}
-            organizations={organizations}
-          />
-          <Publications publications={publications} />
-        </div>
-      </div>
+        <ScrollStackItem itemClassName="site-slide site-slide--paper">
+          <div className="site-slide-body">
+            <div className="mx-auto my-auto w-full max-w-[880px] px-6 py-4 md:px-8">
+              <Teachers teachers={teachers} />
+            </div>
+          </div>
+        </ScrollStackItem>
 
-      <div className="bg-night text-snow">
-        <Culture culture={culture} />
-        <Contact site={site} />
-        <Footer site={site} />
-      </div>
+        <ScrollStackItem itemClassName="site-slide site-slide--paper">
+          <div className="site-slide-body">
+            <div className="mx-auto my-auto w-full max-w-[880px] px-6 py-4 md:px-8">
+              <Outcomes
+                cohorts={outcomeCohorts}
+                internshipOrgIds={internshipOrgIds}
+                organizations={organizations}
+              />
+            </div>
+          </div>
+        </ScrollStackItem>
+
+        <ScrollStackItem itemClassName="site-slide site-slide--paper">
+          <div className="site-slide-body">
+            <div className="mx-auto my-auto w-full max-w-[880px] px-6 py-4 md:px-8">
+              <Publications publications={publications} />
+            </div>
+          </div>
+        </ScrollStackItem>
+
+        <ScrollStackItem itemClassName="site-slide site-slide--paper">
+          <div className="site-slide-body">
+            <div className="mx-auto my-auto w-full max-w-[880px] px-6 py-4 md:px-8">
+              <Culture culture={culture} />
+            </div>
+          </div>
+        </ScrollStackItem>
+
+        <ScrollStackItem itemClassName="site-slide site-slide--paper">
+          <div className="site-slide-body">
+            <div className="mx-auto flex min-h-full w-full max-w-[880px] flex-col px-6 py-4 md:px-8">
+              {/* 联系主体垂直居中；页脚 mt-auto 贴住卡片底边 */}
+              <div className="my-auto">
+                <Contact site={site} />
+              </div>
+              <Footer site={site} />
+            </div>
+          </div>
+        </ScrollStackItem>
+      </ScrollStack>
     </main>
   );
 }

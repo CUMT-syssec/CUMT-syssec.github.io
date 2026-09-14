@@ -10,9 +10,14 @@ import Aurora from "./Aurora";
  */
 export function Hero({ site }: { site: SiteInfo }) {
   return (
-    <section className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-white px-6 py-32 text-center text-ink">
-      {/* Aurora 极光背景：#0561D1 深蓝 / #ddeeed 浅薄荷 / #5227FF 紫罗兰 */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
+    <section className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-6 text-center text-ink">
+      {/* Aurora 极光背景：#0561D1 深蓝 / #ddeeed 浅薄荷 / #5227FF 紫罗兰。
+          裁剪器自带合成层（translateZ）：缩放中卡片的圆角才能切实裁掉 WebGL 画布，
+          否则合成子层会穿出 border-radius，把角画成直角。 */}
+      <div
+        aria-hidden
+        className="absolute inset-0 overflow-hidden rounded-[inherit] transform-gpu"
+      >
         <Aurora
           colorStops={["#0561D1", "#ddeeed", "#5227FF"]}
           amplitude={1}
@@ -20,14 +25,14 @@ export function Hero({ site }: { site: SiteInfo }) {
           lightMode
         />
       </div>
-      <AsciiFluid className="hero-ascii-fluid pointer-events-none absolute inset-0 h-full w-full" />
+      <AsciiFluid className="hero-ascii-fluid pointer-events-none absolute inset-0 h-full w-full overflow-hidden rounded-[inherit] transform-gpu" />
 
       <div
         data-fluid-safe-area
         className="relative mx-auto w-full max-w-[1200px]"
       >
         {/* “Welcome to ” 直接显示，仅专有名词 brand 跑解密动效。 */}
-        <h1 className="brand-settle font-mono text-[clamp(1.5rem,5vw,5.625rem)] leading-[1.15] font-extrabold tracking-[-0.02em] break-words text-[#0561D1]">
+        <h1 className="brand-settle font-mono text-[clamp(1.5rem,5vw,5.625rem)] leading-[1.15] font-extrabold tracking-[-0.02em] break-words text-brand">
           Welcome to <EncryptedText text={site.brand} />
         </h1>
 
@@ -52,7 +57,7 @@ export function Hero({ site }: { site: SiteInfo }) {
 
       <a
         href="#teachers"
-        className="absolute bottom-10 inline-flex items-center gap-2 text-sm text-body transition-colors hover:text-accent md:bottom-14"
+        className="absolute bottom-12 inline-flex items-center gap-2 text-sm text-body transition-colors hover:text-accent"
       >
         向下了解
         <svg

@@ -1,0 +1,47 @@
+/* ScrollStack：窗口滚动模式下容器本身不是滚动容器 */
+.scroll-stack-scroller--window {
+  position: relative;
+  width: 100%;
+  overflow: visible;
+}
+
+/* 静态降级（prefers-reduced-motion）：普通纵向排版 */
+.scroll-stack-scroller--static .scroll-stack-card {
+  margin-bottom: 80px;
+  transform: none !important;
+  filter: none !important;
+}
+
+.scroll-stack-inner {
+  /* 顶部留白 = stackPosition（4%），首卡初始恰好停在钉住位：scale 1、translateY 0 */
+  padding: 4vh clamp(12px, 1.8vw, 24px) 32vh;
+}
+
+.scroll-stack-card {
+  position: relative;
+  transform-origin: top center;
+  will-change: transform, filter;
+  backface-visibility: hidden;
+  border-radius: 28px;
+  border: 1px solid rgb(21 27 38 / 0.08);
+  box-shadow: 0 24px 60px -28px rgb(21 27 38 / 0.25);
+}
+
+.scroll-stack-end {
+  width: 100%;
+  height: 1px;
+}
+
+/* Lenis 与原生 scroll-behavior 互斥 */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}

@@ -1,25 +1,33 @@
 import type { SiteInfo } from "@/lib/types";
 
-/** 简洁页脚：年份、品牌与必要外部链接。 */
+/** 简洁页脚：居中单行——年份品牌 · 外部链接 · 返回顶部。容器由所在卡片提供。 */
 export function Footer({ site }: { site: SiteInfo }) {
   const year = site.lastVerified.slice(0, 4);
   return (
-    <footer className="border-t border-white/8">
-      <div className="mx-auto flex max-w-[880px] flex-col gap-6 px-6 py-10 text-sm text-mist md:flex-row md:items-start md:justify-between">
-        <p>@ {year} {site.brand}</p>
-        <ul className="flex flex-wrap gap-x-5 gap-y-2">
+    <footer className="mt-10 border-t border-ink/10 pt-6">
+      <div className="flex flex-col items-center justify-center gap-x-5 gap-y-2 text-sm text-aux md:flex-row">
+        <p className="whitespace-nowrap">
+          @ {year} {site.brand}
+        </p>
+        <span aria-hidden className="hidden text-ink/20 md:inline">
+          ·
+        </span>
+        <ul className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
           {site.footerLinks.map((l) => (
             <li key={l.href}>
               <a
                 href={l.href}
-                className="text-sky underline-offset-4 hover:underline"
+                className="text-accent underline-offset-4 hover:underline"
               >
                 {l.label}
               </a>
             </li>
           ))}
           <li>
-            <a href="#top" className="text-mist transition-colors hover:text-snow">
+            <a
+              href="#top"
+              className="text-aux transition-colors hover:text-ink"
+            >
               返回顶部 ↑
             </a>
           </li>
