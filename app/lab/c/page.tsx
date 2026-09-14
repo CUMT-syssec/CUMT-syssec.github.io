@@ -226,14 +226,14 @@ function buildSections(copied: boolean, copyEmail: () => void): Section[] {
             <a className="vc2-tblock" href={t.links[0]?.href} target="_blank" rel="noreferrer">
               <span className="vc2-l">
                 <span className="vc2-rust">## </span>
-                <span className="vc2-bright">{t.name}</span>
+                <span className="vc2-bright vc2-tname">{t.name}</span>
                 <span className="vc2-dim"> —— {t.roles.join(" · ")}</span>
+                <span className="vc2-rust"> ↗</span>
               </span>
               <span className="vc2-l vc2-indent vc2-dim">
                 方向：{t.directions.join("、")}
               </span>
               <span className="vc2-l vc2-indent">{t.bio}</span>
-              <span className="vc2-l vc2-indent vc2-linkline">→ 教师主页 ↗</span>
             </a>
           ),
         },
