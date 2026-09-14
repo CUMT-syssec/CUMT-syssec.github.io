@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Anton, JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Anton, JetBrains_Mono, Newsreader, Space_Grotesk } from "next/font/google";
 
 /**
  * DESIGN LAB：设计方向展示平台。
@@ -23,6 +23,13 @@ const jetbrains = JetBrains_Mono({
   variable: "--font-jbmono",
 });
 
+/** pi.dev 式编辑衬线（Plantin 的开放替代），用于方案 C 的叙事标题 */
+const newsreader = Newsreader({
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  variable: "--font-news",
+});
+
 export const metadata: Metadata = {
   title: "DESIGN LAB — CUMT-SYSSEC",
   description: "系统安全实验室主页设计方向展示平台：三套大胆方案，选一。",
@@ -35,7 +42,7 @@ export default function LabLayout({
 }) {
   return (
     <div
-      className={`${grotesk.variable} ${anton.variable} ${jetbrains.variable}`}
+      className={`${grotesk.variable} ${anton.variable} ${jetbrains.variable} ${newsreader.variable}`}
     >
       {children}
     </div>

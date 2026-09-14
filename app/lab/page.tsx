@@ -38,9 +38,9 @@ const variants = [
     nameEn: "CONSOLE",
     inspired: "pi.dev",
     summary:
-      "整站即终端：开机自检序列、$ 命令分节、ASCII 表格、闪烁光标、copy 即走的邮箱。附彩蛋 Crooked Mode。极客、诚实、零营销腔——最像实验室自己的气质。",
-    tags: ["开机序列", "命令分节", "ASCII", "彩蛋开关", "全等宽"],
-    accent: "#57ff57",
+      "pi.dev 蓝本的终端叙事滚动：首屏终端打字输出 CUMT-SYSSEC 巨幅横幅；往下是左栏 sticky 终端逐节 cat Markdown、右栏衬线大标题随滚动切换；输出区整块可点，最后输出联系方式。暖纸方格底 + 锈红配色。",
+    tags: ["开机横幅", "sticky 终端", "cat 分节", "整块可点", "衬线叙事"],
+    accent: "#c15f3c",
   },
 ];
 
