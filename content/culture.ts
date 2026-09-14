@@ -6,12 +6,12 @@ import type { CultureContent } from "@/lib/types";
  * 解释文字为根据原文的展开，最终措辞需实验室确认（见 docs/content-inventory.md）。
  */
 export const culture: CultureContent = {
-  phrase: "不打卡。",
+  phrase: "亦师也亦友。",
   sub: "对自己的研究负责。",
   rules: [
     {
       title: "不打卡",
-      body: "不以来实验室的时长计考勤。每个人自己安排研究节奏，对自己的研究负责。",
+      body: "不以来实验室的时长计考勤。每个人自己安排研究节奏，对自己的研究负责即可。",
     },
     {
       title: "不放羊，但也不压榨",
@@ -23,7 +23,7 @@ export const culture: CultureContent = {
     },
     {
       title: "做可落地的系统，培育顶级成果",
-      body: "研究不止停在论文里：内核完整性检测、代码探测感知等系统都是真实构建、真实运行的成果。",
+      body: "实验室经费充足，可以支持各项研究。研究不止停在论文里：内核完整性检测、代码探测感知等系统都是真实构建、真实运行的成果。",
     },
   ],
 };

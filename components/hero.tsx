@@ -7,18 +7,15 @@ import {
   type MotionValue,
 } from "motion/react";
 import type { SiteInfo } from "@/lib/types";
+import { AsciiFluid } from "./ascii-fluid";
 import { EncryptedText } from "./encrypted-text";
-import { TermCard } from "./term-card";
+import Aurora from "./Aurora";
+import { TextFlip } from "./text-flip";
 
 /**
  * 首屏：品牌立即可读，动效只负责气氛。
  * 内容自上而下：欢迎标题（解密一次）→ 正式中文名 → 研究方向 → 向下了解。
- *
- * 可选的滚动视差：传入 progress（父级首屏区块的 scrollYProgress）且 active 时，
- * 网格几乎不动、柔光稍移并淡出、品牌内容最快上移并在被纸面完全覆盖前消失。
- * 未传参（或移动端/减少动效/无 JS）时渲染与原静态首屏完全一致。
- * 注意：spotlight / brand-settle 的入场动画（CSS animation，优先级高于 inline style）
- * 保留在内层元素上，motion 的滚动样式一律挂在外层 wrapper，避免互相覆盖。
+ * 背景：Aurora 极光渐变做底，ASCII 字符流体叠加（鼠标扰动），视频只取亮度不显示。
  */
 export function Hero({
   site,
@@ -41,67 +38,54 @@ export function Hero({
   const brandOpacity = useTransform(p, [0, 0.55], [1, 0]);
 
   return (
-    <section className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-night px-6 py-32 text-center text-snow">
-      <motion.div
+    <section className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-6 text-center text-ink">
+      {/* Aurora 极光背景：#0561D1 深蓝 / #ddeeed 浅薄荷 / #5227FF 紫罗兰。
+          裁剪器自带合成层（translateZ）：缩放中卡片的圆角才能切实裁掉 WebGL 画布，
+          否则合成子层会穿出 border-radius，把角画成直角。 */}
+      <div
         aria-hidden
-        style={active ? { y: gridY } : undefined}
-        className="absolute inset-0 will-change-transform"
+        className="absolute inset-0 overflow-hidden rounded-[inherit] transform-gpu"
       >
-        <div aria-hidden className="hero-grid absolute inset-0" />
-      </motion.div>
-      <motion.div
-        aria-hidden
-        style={active ? { y: spotY, opacity: spotOpacity } : undefined}
-        className="absolute inset-0 will-change-transform"
-      >
-        <div aria-hidden className="spotlight absolute inset-0" />
-      </motion.div>
+        <Aurora
+          colorStops={["#0561D1", "#ddeeed", "#5227FF"]}
+          amplitude={1}
+          blend={0.5}
+          lightMode
+        />
+      </div>
+      <AsciiFluid className="hero-ascii-fluid pointer-events-none absolute inset-0 h-full w-full overflow-hidden rounded-[inherit] transform-gpu" />
 
-      <motion.div
-        style={active ? { y: brandY, opacity: brandOpacity } : undefined}
-        className="relative mx-auto w-full max-w-[1200px] will-change-transform"
+      <div
+        data-fluid-safe-area
+        className="relative mx-auto w-full max-w-[1200px]"
       >
-        {/* 等宽字体稳定解密字符宽度，窄屏允许自然换行。 */}
+        {/* 终端待输入样式：细光标悬挂在解密文案词尾（不占布局、不破坏居中），
+            解密过程即光标前逐字敲入；完成 后光标继续闪烁等待输入。 */}
         <h1 className="brand-settle font-mono text-[clamp(1.5rem,5vw,5.625rem)] leading-[1.15] font-extrabold tracking-[-0.02em] break-words text-brand">
-          <EncryptedText text={site.welcome} />
+          Welcome to{" "}
+          <span className="relative inline-block">
+            <EncryptedText text={site.brand} />
+            <span
+              aria-hidden
+              className="terminal-caret absolute left-full top-0 ml-1.5 inline-block h-[1.02em] w-[0.07em] translate-y-[0.06em] bg-brand md:ml-2"
+            />
+          </span>
         </h1>
 
-        <p className="mt-6 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-2 text-sm leading-relaxed text-mist md:mt-8 md:text-base">
+        <p className="mt-6 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-2 text-sm leading-relaxed text-body md:mt-8 md:text-base">
           <span>{site.zhName}</span>
           <span>{site.affiliation}</span>
         </p>
 
-        <p className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-mist md:mt-6 md:text-base">
-          {site.directions.map((d, i) => (
-            <span key={d} className="flex items-center gap-4">
-              {i > 0 && (
-                <span aria-hidden className="text-mist/50">
-                  ·
-                </span>
-              )}
-              {d}
-            </span>
-          ))}
-        </p>
-
-        <div className="mx-auto mt-10 max-w-[520px] md:mt-12">
-          <TermCard
-            dark
-            bare
-            label="boot"
-            cmd="whoami"
-            lines={[
-              <span key="w" className="term-strong">
-                cumt-syssec —— 做真实构建、真实运行的系统安全研究。
-              </span>,
-            ]}
-          />
+        {/* 研究方向轮换展示：交替出现，字母模糊入场呼应解密动效 */}
+        <div className="mt-6 flex justify-center md:mt-7">
+          <TextFlip words={site.directions} interval={2800} />
         </div>
-      </motion.div>
+      </div>
 
-      <motion.div
-        style={active ? { opacity: brandOpacity } : undefined}
-        className="absolute inset-x-0 bottom-10 flex justify-center md:bottom-14"
+      <a
+        href="#teachers"
+        className="absolute bottom-12 inline-flex items-center gap-2 text-sm text-body transition-colors hover:text-accent"
       >
         <a
           href="#teachers"
