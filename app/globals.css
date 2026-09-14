@@ -4,7 +4,7 @@
   /* 配色基线：深色封面、浅色档案、深色收尾 */
   --color-night: #080b12; /* 首屏、文化、页脚背景 */
   --color-panel: #101621; /* 深色局部面板 */
-  --color-paper: #f6f7f9; /* 连续浅色正文背景 */
+  --color-paper: #f4f6fa; /* 连续浅色正文背景：往品牌蓝方向微调色温 */
   --color-surface: #ffffff; /* 学生条目与弹窗表面 */
   --color-ink: #151b26; /* 浅底主要文字 */
   --color-body: #4f5c6e; /* 浅底正文与次要文字 */
@@ -32,6 +32,44 @@ body {
   background-color: var(--color-paper);
 }
 
+/* ---------- 舞台充实（方案 C+A：冷蓝纸色 + 微噪 + 点阵坐标纸） ---------- */
+
+/* 点阵坐标纸：品牌蓝 6% 透明度、24px 间距，径向遮罩只让边缘显影——
+   中心本来就被卡片盖住，视觉焦点不被分散；静态、对称、零 JS。
+   卡片自身带变换（始终形成合成层），绘制在 ::before 之上，不会被点阵穿透。 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(
+    circle,
+    rgb(5 97 209 / 0.065) 1px,
+    transparent 1.4px
+  );
+  background-size: 24px 24px;
+  mask-image: radial-gradient(
+    ellipse 62% 55% at 50% 44%,
+    transparent 42%,
+    black 82%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 62% 55% at 50% 44%,
+    transparent 42%,
+    black 82%
+  );
+}
+
+/* 材质微噪：2.5% 的 SVG 噪点，消灭大面积平灰的塑料感 */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
 ::selection {
   background: rgb(49 94 201 / 0.18);
 }
@@ -47,6 +85,22 @@ body {
 }
 
 /* ---------- 首屏：ASCII 字符流体层 ---------- */
+
+/* 终端待输入光标（首屏大标题词尾）：硬闪节奏 */
+.terminal-caret {
+  animation: caret-blink 1.1s steps(1) infinite;
+}
+
+@keyframes caret-blink {
+  0%,
+  55% {
+    opacity: 1;
+  }
+  56%,
+  100% {
+    opacity: 0;
+  }
+}
 
 .hero-ascii-fluid {
   /* 字符色走品牌 token（首屏标题同色系） */
@@ -112,6 +166,9 @@ body {
   .hero-ascii-fluid {
     animation: none;
   }
+  .terminal-caret {
+    animation: none;
+  }
   .hero-ascii-fluid {
     display: none;
   }
@@ -122,11 +179,16 @@ body {
   }
 }
 
-/* 打印/未触发动效时内容必须完整（inline 样式也可被 !important 覆盖） */
+/* 打印/未触发动效时内容必须完整（inline 样式也可被 !important 覆盖）；
+   舞台装饰层（点阵/噪点）打印时关闭 */
 @media print {
   [style] {
     opacity: 1 !important;
     transform: none !important;
     transition: none !important;
+  }
+  body::before,
+  body::after {
+    display: none;
   }
 }
