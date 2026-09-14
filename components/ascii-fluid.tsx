@@ -5,7 +5,7 @@ import { useReducedMotion } from "motion/react";
 
 const FONT_STACK =
   '"SFMono-Regular", Consolas, "Liberation Mono", ui-monospace, monospace';
-const CHARSET = "○>_ ";
+const CHARSET = "o>_ ";
 const TARGET_FPS = 30;
 const FONT_SIZE = 9;
 const CELL_PADDING = { x: 1, y: 2 };
@@ -349,8 +349,9 @@ function createGlyphAtlas(
   glyphWidth: number,
   glyphHeight: number,
   color: string,
+  dpr: number,
 ): GlyphAtlas {
-  const scale = 2;
+  const scale = dpr;
   const tileWidth = Math.max(1, Math.ceil(glyphWidth * scale));
   const tileHeight = Math.max(1, Math.ceil(glyphHeight * scale));
   const canvas = document.createElement("canvas");
@@ -359,7 +360,7 @@ function createGlyphAtlas(
   const context = canvas.getContext("2d");
 
   if (context) {
-    context.scale(scale, scale);
+    context.setTransform(scale, 0, 0, scale, 0, 0);
     context.font = `${fontSize}px ${FONT_STACK}`;
     context.fillStyle = color;
     context.textAlign = "center";
@@ -478,10 +479,15 @@ export function AsciiFluid({ className }: { className?: string }) {
       if (!rect.width || !rect.height) return;
 
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      const glyphWidth = FONT_SIZE / (5 / 3);
-      const glyphHeight = FONT_SIZE;
-      const cellWidth = glyphWidth + 2 * CELL_PADDING.x;
-      const cellHeight = glyphHeight + 2 * CELL_PADDING.y;
+      const pixel = 1 / dpr;
+      const snap = (value: number, minimum = 0) =>
+        Math.max(minimum, Math.round(value * dpr) / dpr);
+      const glyphWidth = snap(FONT_SIZE / (5 / 3), pixel);
+      const glyphHeight = snap(FONT_SIZE, pixel);
+      const padX = snap(CELL_PADDING.x);
+      const padY = snap(CELL_PADDING.y);
+      const cellWidth = Math.max(pixel, glyphWidth + 2 * padX);
+      const cellHeight = Math.max(pixel, glyphHeight + 2 * padY);
       const columns = Math.max(1, Math.floor(rect.width / cellWidth));
       const rows = Math.max(1, Math.floor(rect.height / cellHeight));
 
@@ -500,8 +506,8 @@ export function AsciiFluid({ className }: { className?: string }) {
         cellHeight,
         glyphWidth,
         glyphHeight,
-        padX: CELL_PADDING.x,
-        padY: CELL_PADDING.y,
+        padX,
+        padY,
       };
       field = createFluidField(
         Math.round(columns * 0.8),
@@ -514,6 +520,7 @@ export function AsciiFluid({ className }: { className?: string }) {
         glyphWidth,
         glyphHeight,
         window.getComputedStyle(canvas).color,
+        dpr,
       );
       smoothedLuma = new Float32Array(columns * rows);
       lumaInitialized = false;
