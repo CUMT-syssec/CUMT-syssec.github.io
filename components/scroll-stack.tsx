@@ -1,6 +1,12 @@
 "use client";
 
-import { useLayoutEffect, useRef, useCallback, type ReactNode } from "react";
+import {
+  useLayoutEffect,
+  useRef,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
 import Lenis from "lenis";
 import { useReducedMotion } from "motion/react";
 import "./scroll-stack.css";
@@ -73,6 +79,20 @@ export default function ScrollStack({
   );
   const isUpdatingRef = useRef(false);
   const reducedMotion = useReducedMotion();
+  const [isCompact, setIsCompact] = useState(false);
+
+  // 手机端（窄屏）退化为自然文档流：钉住牌组 + 卡内滚动在触摸下会互相截住，
+  // 窄屏内容又普遍超高（单列），滑动体验必然冲突。useLayoutEffect 在绘制前
+  // 完成 matchMedia 判定，移动端首帧即流式、无闪烁，SSR 输出保持一致。
+  useLayoutEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsCompact(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  const flowMode = reducedMotion === true || isCompact;
 
   const calculateProgress = useCallback(
     (scrollTop: number, start: number, end: number) => {
@@ -225,7 +245,7 @@ export default function ScrollStack({
 
   useLayoutEffect(() => {
     const scroller = scrollerRef.current;
-    if (!scroller || reducedMotion) return;
+    if (!scroller || flowMode) return;
 
     const cards = Array.from(document.querySelectorAll<HTMLElement>(
       ".scroll-stack-card",
@@ -296,12 +316,23 @@ export default function ScrollStack({
       lenis.destroy();
       lenisRef.current = null;
       stackCompletedRef.current = false;
+      // 模式切换（如窗口跨过窄屏断点）时清掉钉住模式留下的行内样式，
+      // 否则残留的 transform/margin 会让流式排版错位。
+      cards.forEach((card) => {
+        card.style.transform = "";
+        card.style.setProperty("-webkit-transform", "");
+        card.style.filter = "";
+        card.style.marginBottom = "";
+        card.style.willChange = "";
+        card.style.transformOrigin = "";
+        card.style.backfaceVisibility = "";
+      });
       cardsRef.current = [];
       lastTransformsRef.current.clear();
       isUpdatingRef.current = false;
     };
   }, [
-    reducedMotion,
+    flowMode,
     itemDistance,
     itemScale,
     itemStackDistance,
@@ -319,7 +350,7 @@ export default function ScrollStack({
     <div
       ref={scrollerRef}
       className={`scroll-stack-scroller scroll-stack-scroller--window ${
-        reducedMotion ? "scroll-stack-scroller--static " : ""
+        flowMode ? "scroll-stack-scroller--static " : ""
       }${className}`.trim()}
     >
       <div className="scroll-stack-inner">

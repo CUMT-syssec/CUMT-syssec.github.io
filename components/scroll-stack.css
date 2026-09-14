@@ -5,11 +5,39 @@
   overflow: visible;
 }
 
-/* 静态降级（prefers-reduced-motion）：普通纵向排版 */
+/* 流式模式（手机端 / prefers-reduced-motion）：放弃钉住牌组，
+   卡片自然高度、正常文档流整页滚动——彻底消除触摸下
+   “窗口滚动 vs 卡内滚动”互相截住的冲突 */
+.scroll-stack-scroller--static .scroll-stack-inner {
+  padding-block: 4vh 4vh;
+}
+
 .scroll-stack-scroller--static .scroll-stack-card {
-  margin-bottom: 80px;
+  margin-bottom: 20px;
   transform: none !important;
   filter: none !important;
+}
+
+/* 首卡（首屏）保留接近整屏的高度，开屏仍有“一屏”的仪式感 */
+.scroll-stack-scroller--static .scroll-stack-card:first-child {
+  min-height: 92svh;
+}
+
+.scroll-stack-scroller--static .site-slide {
+  height: auto;
+  min-height: 0;
+}
+
+.scroll-stack-scroller--static .site-slide-body {
+  height: auto;
+  overflow: visible;
+  display: block;
+  padding-block: 2rem;
+}
+
+/* 流式模式下没有 Lenis，锚点回归原生滚动，补回平滑 */
+html:has(.scroll-stack-scroller--static) {
+  scroll-behavior: smooth;
 }
 
 .scroll-stack-inner {
