@@ -1,4 +1,5 @@
 import type { SiteInfo } from "@/lib/types";
+import { AsciiFluid } from "./ascii-fluid";
 import { EncryptedText } from "./encrypted-text";
 
 /**
@@ -10,8 +11,12 @@ export function Hero({ site }: { site: SiteInfo }) {
     <section className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-night px-6 py-32 text-center text-snow">
       <div aria-hidden className="hero-grid absolute inset-0" />
       <div aria-hidden className="spotlight absolute inset-0" />
+      <AsciiFluid className="hero-ascii-fluid pointer-events-none absolute inset-0 h-full w-full" />
 
-      <div className="relative mx-auto w-full max-w-[1200px]">
+      <div
+        data-fluid-safe-area
+        className="relative mx-auto w-full max-w-[1200px]"
+      >
         {/* 等宽字体稳定解密字符宽度，窄屏允许自然换行。 */}
         <h1 className="brand-settle font-mono text-[clamp(1.5rem,5vw,5.625rem)] leading-[1.15] font-extrabold tracking-[-0.02em] break-words text-brand">
           <EncryptedText text={site.welcome} />
