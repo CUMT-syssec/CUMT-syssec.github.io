@@ -1,0 +1,84 @@
+/* 主页滚动空间动效（往下滑、滑块式覆盖）—— 一律 hm- 前缀，仅在桌面端生效 */
+
+/* ---------- 首屏底层空间：sticky 首屏 + 纸面覆盖滑入 ---------- */
+
+.hm-stage {
+  position: relative;
+}
+
+/* 滚动测量哨兵：绝对定位于首屏原位（高 100svh），随文档滚动，
+   作为首屏分层视差的 useScroll 目标（sticky 元素自身 rect 被粘住，不能当目标）。 */
+.hm-sentinel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100svh;
+  pointer-events: none;
+}
+
+/* 首屏容器：默认普通文档流（移动端无叠层技巧） */
+.hm-hero {
+  position: relative;
+  z-index: 0;
+}
+
+/* 纸面容器：默认普通文档流 */
+.hm-paper {
+  position: relative;
+  z-index: 10;
+}
+
+/* 深色收尾容器：从纸面切开的边缘线索（1px 高光线 + 轻微投影） */
+.hm-dark {
+  position: relative;
+  border-top: 1px solid rgb(145 183 255 / 0.1);
+  box-shadow: 0 -40px 80px -40px rgb(0 0 0 / 0.65);
+}
+
+/* 桌面端且未要求减少动效：首屏粘住不动，纸面从其上滑过（不占额外滚动距离）。
+   圆角与投影是“从首屏上方滑过”的空间线索，仅在 sticky 启用时有意义，一并收口。 */
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  .hm-hero {
+    position: sticky;
+    top: 0;
+  }
+  .hm-paper {
+    border-radius: 28px 28px 0 0;
+    box-shadow: 0 -32px 80px rgb(0 0 0 / 0.55);
+  }
+}
+
+/* ---------- 页脚从下方露出（JS 加 hm-reveal-on 后才生效） ---------- */
+
+.hm-reveal-root {
+  position: relative;
+}
+
+/* 主内容流：始终在不透明背景之上，露出模式下垫高并盖住 fixed 页脚 */
+.hm-flow {
+  position: relative;
+  z-index: 1;
+  background: var(--color-night);
+}
+
+.hm-footer {
+  background: var(--color-night);
+}
+
+@media (min-width: 768px) {
+  .hm-reveal-on .hm-flow {
+    margin-bottom: var(--hm-footer-h, 0px);
+  }
+  .hm-reveal-on .hm-footer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+  }
+  /* 键盘 Tab 进入页脚时抬到主内容之上，保证焦点环与链接可见可用 */
+  .hm-reveal-on .hm-footer:focus-within {
+    z-index: 60;
+  }
+}
