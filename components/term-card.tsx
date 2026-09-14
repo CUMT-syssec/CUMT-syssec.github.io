@@ -3,27 +3,23 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * 章节终端条：滑入视口时自动播放一次"敲命令 → 输出"。
- * 默认渲染完整内容（无 JS / 减少动效 / IO 不可用时即为静态终端）；
- * 挂载后若允许动效则清空，等进入视口再重放——各节内容下方已有完整正文，
- * 本组件为氛围增强，对辅助技术隐藏。
+ * 章节终端卡片：正文全部装进终端，入视口播放一次"敲命令 → 逐行输出"。
+ * 默认渲染完整内容（无 JS / 减少动效 / IO 不可用时即为静态终端，内容可读）；
+ * 挂载后若允许动效则清空，等进入视口再重放。
  */
+
+export type TermLine = { node: React.ReactNode; cls?: string };
+
 export function TermCard({
   label,
   cmd,
   lines,
-  dark = false,
-  bare = false,
   className = "",
 }: {
   /** 窗口标题，如 team、paths */
   label: string;
   cmd: string;
-  lines: React.ReactNode[];
-  /** 深色区块（首屏 / 文化 / 联系）使用 */
-  dark?: boolean;
-  /** 无窗口外框，直接融进背景 */
-  bare?: boolean;
+  lines: TermLine[];
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -50,20 +46,20 @@ export function TermCard({
           i += 1;
           setCmdLen(Math.min(i, cmd.length));
           if (i < cmd.length) {
-            timers.push(window.setTimeout(type, 26));
+            timers.push(window.setTimeout(type, 24));
           } else {
             let j = 0;
             const show = () => {
               j += 1;
               setShown(j);
-              if (j < lines.length) timers.push(window.setTimeout(show, 180));
+              if (j < lines.length) timers.push(window.setTimeout(show, 60));
             };
-            timers.push(window.setTimeout(show, 200));
+            timers.push(window.setTimeout(show, 220));
           }
         };
-        timers.push(window.setTimeout(type, 150));
+        timers.push(window.setTimeout(type, 180));
       },
-      { rootMargin: "0px 0px -12% 0px" },
+      { rootMargin: "0px 0px -14% 0px" },
     );
     io.observe(el);
     return () => {
@@ -79,44 +75,61 @@ export function TermCard({
   const done = !typing && shown >= lines.length;
 
   return (
-    <div
-      ref={ref}
-      aria-hidden
-      className={`term${dark ? " term--dark" : ""}${bare ? " term--bare" : ""} ${className}`}
-    >
+    <div ref={ref} className={`term ${className}`}>
       <div className="term-card">
-        {!bare && (
-          <div className="term-head">
-            <i className="term-dot" />
-            <i className="term-dot" />
-            <i className="term-dot" />
-            <span className="term-tab">guest@syssec — {label}</span>
-          </div>
-        )}
+        <div className="term-head">
+          <i className="term-dot term-dot--r" />
+          <i className="term-dot term-dot--y" />
+          <i className="term-dot term-dot--g" />
+          <span className="term-tab">guest@syssec — {label}</span>
+          <span className="term-path">~/lab</span>
+        </div>
         <div className="term-body">
-          <div className="term-line">
-            <span className="term-prompt">guest@syssec</span>
-            <span className="term-dim">:</span>
-            <span className="term-tilde">~</span>
-            <span className="term-dim">$</span> {cmd.slice(0, cmdLen)}
-            {typing && <span className="term-caret" />}
+          <div className="t-l t-cmd">
+            <span className="t-prompt">guest@syssec</span>
+            <span className="t-dim">:</span>
+            <span className="t-tilde">~</span>
+            <span className="t-dim">$</span> {cmd.slice(0, cmdLen)}
+            {typing && <span className="t-caret" />}
           </div>
           {lines.slice(0, shown).map((l, i) => (
-            <div key={i} className="term-line term-out">
-              {l}
+            <div key={i} className={`t-l${l.cls ? ` ${l.cls}` : ""}`}>
+              {l.node}
             </div>
           ))}
           {done && (
-            <div className="term-line">
-              <span className="term-prompt">guest@syssec</span>
-              <span className="term-dim">:</span>
-              <span className="term-tilde">~</span>
-              <span className="term-dim">$</span>{" "}
-              <span className="term-caret term-caret--blink" />
+            <div className="t-l t-cmd">
+              <span className="t-prompt">guest@syssec</span>
+              <span className="t-dim">:</span>
+              <span className="t-tilde">~</span>
+              <span className="t-dim">$</span>{" "}
+              <span className="t-caret t-caret--blink" />
             </div>
           )}
         </div>
       </div>
     </div>
+  );
+}
+
+/** 终端内的 [ copy ] 按钮（客户端小岛） */
+export function TermCopy({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      className="t-copy"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(text);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1600);
+        } catch {
+          /* 剪贴板不可用时静默 */
+        }
+      }}
+    >
+      {copied ? "[ copied ✓ ]" : "[ copy ]"}
+    </button>
   );
 }

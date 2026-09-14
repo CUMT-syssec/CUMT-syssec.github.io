@@ -1,4 +1,4 @@
-/* Sarasa Fixed SC：终端条中英 2:1 严格等宽（子集自托管，见 public/fonts） */
+/* Sarasa Fixed SC：终端中英 2:1 严格等宽（子集自托管，见 public/fonts） */
 @font-face {
   font-family: "Sarasa Fixed SC";
   src: url("/fonts/sarasa-fixed-sc-Regular.woff2") format("woff2");
@@ -15,82 +15,148 @@
   font-display: swap;
 }
 
-/* 章节终端条样式：浅底纸面 / 深底夜色两套，bare 变体无外框 */
+/* 章节终端卡片：幻灯片白底上的精致卡片，正文全在终端里 */
 .term {
   font-family: "Sarasa Fixed SC", var(--font-mono);
   text-align: left;
 }
 
 .term-card {
-  background: var(--color-surface);
-  border: 1px solid rgb(21 27 38 / 0.1);
-  border-radius: 12px;
+  background: #f9f9f6;
+  border: 1px solid rgb(21 27 38 / 0.09);
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 12px 32px -22px rgb(21 27 38 / 0.28);
+  box-shadow:
+    0 1px 2px rgb(21 27 38 / 0.04),
+    0 20px 44px -26px rgb(21 27 38 / 0.22);
 }
 
+/* 窗口栏 */
 .term-head {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.5rem 0.9rem;
-  border-bottom: 1px solid rgb(21 27 38 / 0.08);
-  background: rgb(21 27 38 / 0.03);
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgb(21 27 38 / 0.07);
+  background: rgb(21 27 38 / 0.025);
 }
 
 .term-dot {
-  width: 0.55rem;
-  height: 0.55rem;
+  width: 0.6rem;
+  height: 0.6rem;
   border-radius: 50%;
-  background: rgb(21 27 38 / 0.14);
+}
+
+.term-dot--r {
+  background: #e5a299;
+}
+
+.term-dot--y {
+  background: #e5cf9f;
+}
+
+.term-dot--g {
+  background: #a9d1a4;
 }
 
 .term-tab {
-  margin-left: 0.35rem;
+  margin-left: 0.4rem;
   font-size: 0.68rem;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: var(--color-aux);
 }
 
-.term-body {
-  padding: 0.85rem 1.05rem 1rem;
-  font-size: clamp(0.8rem, 0.4vw + 0.7rem, 0.92rem);
-  line-height: 1.9;
+.term-path {
+  margin-left: auto;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: rgb(89 101 121 / 0.55);
 }
 
-.term-line {
+/* 正文：字号层级而不是一刀切 */
+.term-body {
+  padding: 1rem 1.25rem 1.15rem;
+  font-size: clamp(0.8rem, 0.35vw + 0.72rem, 0.875rem);
+  line-height: 1.78;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(21 27 38 / 0.16) transparent;
+}
+
+/* 只有视口偏矮时才限高内滚；常规高度让卡片自然撑满 */
+@media (max-height: 780px) {
+  .term-body {
+    max-height: 56vh;
+    overflow-y: auto;
+  }
+}
+
+.t-l {
   white-space: pre-wrap;
   word-break: break-word;
   min-height: 1.1em;
 }
 
-.term-prompt {
+.t-cmd {
+  margin-bottom: 0.5em;
+}
+
+.t-prompt {
   color: var(--color-accent);
   font-weight: 700;
 }
 
-.term-tilde {
+.t-tilde {
   color: var(--color-brand);
 }
 
-.term-dim {
+.t-dim {
   color: var(--color-aux);
 }
 
-.term-out {
-  color: var(--color-body);
-}
-
-.term-out .term-strong {
-  color: var(--color-ink);
+/* 层级 */
+.t-title {
+  font-size: 1.02em;
   font-weight: 700;
+  color: var(--color-ink);
 }
 
-.term-dir {
+.t-strong {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.t-meta {
+  font-size: 0.85em;
+  color: var(--color-aux);
+}
+
+.t-big {
+  font-size: 1.28em;
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.t-accent {
   color: var(--color-accent);
 }
 
-.term-caret {
+.t-link {
+  color: var(--color-accent);
+}
+
+.t-amber {
+  color: #96700f;
+}
+
+.t-indent {
+  padding-left: 1.4em;
+}
+
+.t-gap {
+  margin-top: 0.85em;
+}
+
+.t-caret {
   display: inline-block;
   width: 0.58em;
   height: 1em;
@@ -99,7 +165,7 @@
   margin-left: 0.1em;
 }
 
-.term-caret--blink {
+.t-caret--blink {
   animation: term-blink 1.05s steps(1) infinite;
 }
 
@@ -109,68 +175,90 @@
   }
 }
 
-/* 深色区块 */
-.term--dark .term-card {
-  background: rgb(255 255 255 / 0.04);
-  border-color: rgb(255 255 255 / 0.1);
-  box-shadow: none;
+/* 可点击输出块：整块都是链接，悬停给反馈 */
+.t-block {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 8px;
+  padding: 0.24rem 0.55rem;
+  margin: 0.12rem -0.55rem;
+  transition: background 0.15s ease;
 }
 
-.term--dark .term-head {
-  background: rgb(255 255 255 / 0.03);
-  border-color: rgb(255 255 255 / 0.08);
+.t-block:hover {
+  background: rgb(49 94 201 / 0.06);
 }
 
-.term--dark .term-dot {
-  background: rgb(255 255 255 / 0.16);
+.t-block:hover .t-link {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
-.term--dark .term-tab {
-  color: #7c8798;
+.t-block .t-l {
+  display: block;
 }
 
-.term--dark .term-prompt {
-  color: var(--color-sky);
+/* 去向行：年 / 学校 / 阶段 三列对齐 */
+.t-row {
+  display: grid;
+  grid-template-columns: 4.2em minmax(0, 1fr) auto;
+  gap: 1em;
+  align-items: baseline;
 }
 
-.term--dark .term-tilde {
-  color: #c9a86a;
+/* 邮箱行 + copy 按钮 */
+.t-mailrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9em;
+  flex-wrap: wrap;
 }
 
-.term--dark .term-dim {
-  color: #6b7688;
+.t-mail {
+  color: var(--color-accent);
+  font-weight: 700;
+  font-size: 1.15em;
+  text-decoration: none;
+  border-bottom: 1px dashed rgb(49 94 201 / 0.45);
 }
 
-.term--dark .term-out {
-  color: var(--color-mist);
+.t-mail:hover {
+  border-bottom-style: solid;
 }
 
-.term--dark .term-out .term-strong {
-  color: var(--color-snow);
+.t-copy {
+  font-family: inherit;
+  font-size: 0.82em;
+  color: var(--color-aux);
+  background: none;
+  border: 1px solid rgb(21 27 38 / 0.16);
+  border-radius: 6px;
+  padding: 0.25em 0.6em;
+  cursor: pointer;
 }
 
-.term--dark .term-dir {
-  color: var(--color-sky);
+.t-copy:hover {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
 }
 
-.term--dark .term-caret {
-  background: var(--color-sky);
-}
-
-/* 无外框（首屏）：融进背景 */
-.term--bare .term-card {
-  background: transparent;
-  border: 0;
-  box-shadow: none;
-  border-radius: 0;
-}
-
-.term--bare .term-body {
-  padding: 0;
+@media (max-width: 640px) {
+  .term-body {
+    max-height: 62vh;
+    overflow-y: auto;
+    padding: 1rem 1.05rem 1.15rem;
+  }
+  .t-row {
+    grid-template-columns: 3.6em minmax(0, 1fr);
+  }
+  .t-row .t-meta {
+    grid-column: 2;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .term-caret--blink {
+  .t-caret--blink {
     animation: none;
   }
 }

@@ -1,11 +1,3 @@
-"use client";
-
-import {
-  motion,
-  useMotionValue,
-  useTransform,
-  type MotionValue,
-} from "motion/react";
 import type { SiteInfo } from "@/lib/types";
 import { AsciiFluid } from "./ascii-fluid";
 import { EncryptedText } from "./encrypted-text";
@@ -17,26 +9,7 @@ import { TextFlip } from "./text-flip";
  * 内容自上而下：欢迎标题（解密一次）→ 正式中文名 → 研究方向 → 向下了解。
  * 背景：Aurora 极光渐变做底，ASCII 字符流体叠加（鼠标扰动），视频只取亮度不显示。
  */
-export function Hero({
-  site,
-  progress,
-  active = false,
-}: {
-  site: SiteInfo;
-  /** 父级区块的 scrollYProgress（0 页顶 → 1 纸面完全覆盖首屏） */
-  progress?: MotionValue<number>;
-  /** 桌面端且无减少动效时才挂载滚动联动样式 */
-  active?: boolean;
-}) {
-  // progress 缺省时退化为静止值，保证 hooks 调用顺序恒定
-  const fallback = useMotionValue(0);
-  const p = progress ?? fallback;
-  const gridY = useTransform(p, [0, 1], [0, -12]);
-  const spotY = useTransform(p, [0, 1], [0, -30]);
-  const spotOpacity = useTransform(p, [0, 0.85], [1, 0]);
-  const brandY = useTransform(p, [0, 0.7], [0, -60]);
-  const brandOpacity = useTransform(p, [0, 0.55], [1, 0]);
-
+export function Hero({ site }: { site: SiteInfo }) {
   return (
     <section className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-6 text-center text-ink">
       {/* Aurora 极光背景：#0561D1 深蓝 / #ddeeed 浅薄荷 / #5227FF 紫罗兰。
@@ -87,26 +60,21 @@ export function Hero({
         href="#teachers"
         className="absolute bottom-12 inline-flex items-center gap-2 text-sm text-body transition-colors hover:text-accent"
       >
-        <a
-          href="#teachers"
-          className="inline-flex items-center gap-2 text-sm text-mist transition-colors hover:text-sky"
+        向下了解
+        <svg
+          aria-hidden
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         >
-          向下了解
-          <svg
-            aria-hidden
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M12 5v14M5 12l7 7 7-7" />
-          </svg>
-        </a>
-      </motion.div>
+          <path d="M12 5v14M5 12l7 7 7-7" />
+        </svg>
+      </a>
     </section>
   );
 }
