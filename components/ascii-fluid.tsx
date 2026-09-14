@@ -880,7 +880,8 @@ export function AsciiFluid({ className }: { className?: string }) {
         muted
         playsInline
         preload="auto"
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        /* 背景由 Aurora 极光层提供，视频只取亮度驱动字符，不显示画面 */
+        className="hidden"
       />
       <canvas
         ref={canvasRef}
