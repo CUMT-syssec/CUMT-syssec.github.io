@@ -1,0 +1,522 @@
+/* 方案 B — 巨字动能 KINETIC
+   炭黑底 + 骨白 Anton 巨字 + 酸性荧光绿 */
+.vb {
+  --bg: #121210;
+  --bone: #ece9e1;
+  --dim: #8a877c;
+  --acid: #c8ff16;
+  --line: rgb(236 233 225 / 0.14);
+  --anton:
+    var(--font-anton), "Arial Narrow", "PingFang SC", "Microsoft YaHei",
+    sans-serif;
+  --sans:
+    var(--font-grotesk), "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+    "Noto Sans SC", sans-serif;
+  --mono: var(--font-jbmono), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  background: var(--bg);
+  color: var(--bone);
+  font-family: var(--sans);
+  min-height: 100vh;
+  overflow-x: clip;
+}
+
+.vb ::selection {
+  background: var(--acid);
+  color: var(--bg);
+}
+
+/* ---------- 顶栏 ---------- */
+.vb-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+  padding: 1rem 1.6rem;
+  background: rgb(18 18 16 / 0.82);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line);
+}
+
+.vb-brand {
+  font-family: var(--anton);
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  color: var(--bone);
+  text-decoration: none;
+}
+
+.vb-brand sup {
+  color: var(--acid);
+  font-size: 0.55em;
+}
+
+.vb-nav {
+  margin-left: auto;
+  display: flex;
+  gap: 1.4rem;
+}
+
+.vb-nav a {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--dim);
+  text-decoration: none;
+  letter-spacing: 0.1em;
+}
+
+.vb-nav a:hover {
+  color: var(--acid);
+}
+
+.vb-counter {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+}
+
+.vb-counter em {
+  font-style: normal;
+  color: var(--acid);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- 首屏 ---------- */
+.vb-hero {
+  position: relative;
+  min-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 1.6rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.vb-hero-kicker {
+  font-family: var(--mono);
+  font-size: clamp(0.8rem, 1.6vw, 1.05rem);
+  color: var(--dim);
+  letter-spacing: 0.12em;
+  margin: 0 0 1rem;
+}
+
+.vb-h1 {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  font-family: var(--anton);
+  font-weight: 400;
+  font-size: clamp(4.5rem, 19vw, 19rem);
+  line-height: 0.86;
+  letter-spacing: 0.005em;
+  text-transform: uppercase;
+}
+
+.vb-h1 span {
+  display: block;
+}
+
+.vb-h1 sup {
+  font-size: 0.14em;
+  color: var(--acid);
+  vertical-align: super;
+}
+
+.vb-h1-sm {
+  font-size: clamp(3.4rem, 13vw, 12rem);
+}
+
+/* 旋转徽章 */
+.vb-badge {
+  position: absolute;
+  right: clamp(1rem, 6vw, 6rem);
+  top: clamp(4rem, 14vh, 9rem);
+  width: clamp(90px, 12vw, 150px);
+  aspect-ratio: 1;
+}
+
+.vb-badge svg {
+  width: 100%;
+  height: 100%;
+  animation: vb-spin 14s linear infinite;
+}
+
+.vb-badge text {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  fill: var(--dim);
+}
+
+.vb-badge-core {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--acid);
+  font-size: 1.4rem;
+}
+
+@keyframes vb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* marquee */
+.vb-marquee {
+  display: flex;
+  overflow: hidden;
+  border-top: 1px solid var(--line);
+  margin: clamp(2rem, 6vh, 4rem) -1.6rem 0;
+  padding: 0.9rem 0;
+}
+
+.vb-marquee-in {
+  flex-shrink: 0;
+  display: flex;
+  white-space: nowrap;
+  font-family: var(--anton);
+  font-size: clamp(1.4rem, 3.4vw, 2.6rem);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  animation: vb-marquee 26s linear infinite;
+}
+
+.vb-marquee-in em {
+  font-style: normal;
+  color: var(--acid);
+  margin: 0 1.2rem;
+}
+
+@keyframes vb-marquee {
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+/* ---------- 滚动叙事 ---------- */
+.vb-intro {
+  padding: clamp(4rem, 12vh, 8rem) 1.6rem;
+  max-width: 1200px;
+}
+
+.vb-tag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  color: var(--acid);
+  margin-bottom: 1.6rem;
+}
+
+.vb-words {
+  font-family: var(--sans);
+  font-weight: 500;
+  font-size: clamp(1.7rem, 4.6vw, 3.8rem);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  margin: 0;
+  max-width: 22em;
+}
+
+.vb-word {
+  display: inline-block;
+}
+
+/* ---------- 章节 ---------- */
+.vb-sec {
+  padding: clamp(3rem, 8vh, 6rem) 1.6rem;
+  border-top: 1px solid var(--line);
+}
+
+.vb-sec-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: clamp(1.5rem, 4vh, 3rem);
+}
+
+.vb-h2 {
+  font-family: var(--anton);
+  font-weight: 400;
+  font-size: clamp(2.8rem, 9vw, 8rem);
+  line-height: 0.95;
+  margin: 0;
+  text-transform: uppercase;
+}
+
+.vb-h2 sup {
+  font-size: 0.22em;
+  color: var(--acid);
+  margin-left: 0.3rem;
+}
+
+.vb-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+}
+
+.vb-row {
+  display: grid;
+  grid-template-columns: 5.5rem minmax(0, 1.1fr) minmax(0, 1.4fr) 3rem;
+  align-items: center;
+  gap: 1.4rem;
+  padding: 1.35rem 0.8rem;
+  border-bottom: 1px solid var(--line);
+  color: var(--bone);
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+a.vb-row:hover {
+  background: var(--acid);
+  color: var(--bg);
+}
+
+a.vb-row:hover .vb-row-no,
+a.vb-row:hover .vb-row-meta,
+a.vb-row:hover .vb-row-meta em {
+  color: rgb(18 18 16 / 0.62);
+}
+
+a.vb-row:hover .vb-row-arrow {
+  transform: translateX(6px);
+  color: var(--bg);
+}
+
+.vb-row-no {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--dim);
+}
+
+.vb-row-year {
+  font-size: 1.1rem;
+  color: var(--acid);
+}
+
+.vb-row-name {
+  font-family: var(--anton);
+  font-size: clamp(1.7rem, 4.4vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+}
+
+.vb-row-dsts {
+  font-size: clamp(1.2rem, 3vw, 2.1rem);
+}
+
+.vb-row-meta {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1.8;
+  color: var(--dim);
+}
+
+.vb-row-meta em {
+  display: block;
+  font-style: normal;
+}
+
+.vb-row-arrow {
+  justify-self: end;
+  font-size: 1.3rem;
+  transition: transform 0.2s ease;
+}
+
+.vb-row-static {
+  cursor: default;
+}
+
+.vb-row-dim {
+  opacity: 0.65;
+}
+
+.vb-row-pub .vb-row-name {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: clamp(1.1rem, 2.6vw, 1.9rem);
+  letter-spacing: 0;
+}
+
+.vb-pub-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+@media (max-width: 860px) {
+  .vb-row {
+    grid-template-columns: 3.4rem 1fr 2rem;
+  }
+  .vb-row-meta {
+    grid-column: 2 / 3;
+  }
+}
+
+/* ---------- 文化 ---------- */
+.vb-giant {
+  font-family: var(--anton);
+  font-weight: 400;
+  font-size: clamp(4rem, 15vw, 14rem);
+  line-height: 1;
+  margin: 0 0 0.8rem;
+  color: var(--acid);
+}
+
+.vb-culture-sub {
+  font-family: var(--mono);
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  margin: 0 0 2.6rem;
+}
+
+.vb-rules {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.vb-rules li {
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 1.3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.vb-rule-no {
+  font-family: var(--mono);
+  color: var(--acid);
+  font-size: 0.72rem;
+}
+
+.vb-rules strong {
+  font-size: 1.05rem;
+}
+
+.vb-rules span:last-child {
+  font-size: 0.8rem;
+  line-height: 1.8;
+  color: var(--dim);
+}
+
+/* ---------- 联系 ---------- */
+.vb-contact {
+  padding: clamp(4rem, 12vh, 8rem) 1.6rem;
+  border-top: 1px solid var(--line);
+}
+
+.vb-aud {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 2.6rem;
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  line-height: 2.2;
+  color: var(--dim);
+}
+
+.vb-aud li::before {
+  content: "→ ";
+  color: var(--acid);
+}
+
+.vb-mail {
+  display: inline-block;
+  font-family: var(--anton);
+  font-size: clamp(1.8rem, 6vw, 4.6rem);
+  color: var(--bone);
+  text-decoration: none;
+  border-bottom: 0.06em solid var(--acid);
+  transition:
+    color 0.2s,
+    background 0.2s;
+  padding: 0 0.2em;
+}
+
+.vb-mail em {
+  font-style: normal;
+  color: var(--acid);
+}
+
+.vb-mail:hover {
+  background: var(--acid);
+  color: var(--bg);
+}
+
+.vb-mail:hover em {
+  color: var(--bg);
+}
+
+/* ---------- 页脚 ---------- */
+.vb-foot {
+  display: flex;
+  gap: 1.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+  padding: 1.2rem 1.6rem 1.6rem;
+  border-top: 1px solid var(--line);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--dim);
+}
+
+.vb-foot-links {
+  margin-left: auto;
+  display: flex;
+  gap: 1.2rem;
+}
+
+.vb-foot-links a {
+  color: var(--bone);
+  text-decoration: none;
+}
+
+.vb-foot-links a:hover {
+  color: var(--acid);
+}
+
+/* 返回 LAB */
+.vb-labback {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--bg);
+  background: var(--acid);
+  padding: 0.5rem 0.8rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.vb-labback:hover {
+  background: var(--bone);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vb * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

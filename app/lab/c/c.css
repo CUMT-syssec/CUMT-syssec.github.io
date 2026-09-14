@@ -1,0 +1,426 @@
+/* 方案 C — 终端原生 CONSOLE
+   全等宽、黑底绿字、ASCII、闪烁光标；页面本身是一个终端窗口 */
+.vc {
+  --bg: #0a0c0a;
+  --fg: #b6c7b6;
+  --bright: #e6ffe6;
+  --dim: #5f705f;
+  --green: #57ff57;
+  --amber: #ffb000;
+  --line: #1d261d;
+  --mono: var(--font-jbmono), ui-monospace, SFMono-Regular, Menlo, Consolas,
+    monospace;
+
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--mono);
+  min-height: 100vh;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.vc-crooked {
+  transform: rotate(-1.1deg) scale(1.01);
+}
+
+.vc ::selection {
+  background: var(--green);
+  color: var(--bg);
+}
+
+/* ---------- 窗口栏 ---------- */
+.vc-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
+  background: #101410;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.72rem;
+}
+
+.vc-dots i {
+  display: inline-block;
+  width: 0.62rem;
+  height: 0.62rem;
+  border-radius: 50%;
+  background: var(--line);
+  margin-right: 0.4rem;
+}
+
+.vc-dots i:first-child {
+  background: #ff5f57;
+}
+
+.vc-dots i:nth-child(2) {
+  background: var(--amber);
+}
+
+.vc-dots i:nth-child(3) {
+  background: #28c840;
+}
+
+.vc-title {
+  color: var(--dim);
+  letter-spacing: 0.04em;
+}
+
+.vc-crook {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--dim);
+  background: none;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.3rem 0.6rem;
+  cursor: pointer;
+}
+
+.vc-crook:hover {
+  color: var(--green);
+  border-color: var(--green);
+}
+
+.vc-body {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 0 1.2rem;
+}
+
+/* ---------- 首屏 ---------- */
+.vc-hero {
+  min-height: calc(100vh - 40px);
+  padding: 2rem 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.vc-boot {
+  margin: 0 0 2.5rem;
+  font-size: 0.8rem;
+  line-height: 2;
+  color: var(--dim);
+  white-space: pre-wrap;
+}
+
+.vc-ok {
+  color: var(--fg);
+}
+
+.vc-ok::first-line {
+  color: var(--green);
+}
+
+.vc-hero-in {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity 0.5s ease,
+    transform 0.5s ease;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.vc-hero-in.vc-ready {
+  opacity: 1;
+  transform: none;
+}
+
+.vc-h1 {
+  font-size: clamp(2.2rem, 7.5vw, 5rem);
+  font-weight: 700;
+  color: var(--bright);
+  letter-spacing: -0.01em;
+  margin: 0 0 1rem;
+}
+
+.vc-dim {
+  color: var(--dim);
+  font-weight: 400;
+}
+
+.vc-cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.9em;
+  margin-left: 0.15em;
+  background: var(--green);
+  vertical-align: -0.08em;
+  animation: vc-blink 1.05s steps(1) infinite;
+}
+
+@keyframes vc-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.vc-sub {
+  color: var(--dim);
+  font-size: 0.85rem;
+  line-height: 1.9;
+  margin: 0 0 2.5rem;
+}
+
+.vc-scrollhint {
+  color: var(--green);
+  font-size: 0.8rem;
+  margin: 0;
+  animation: vc-bob 2.2s ease-in-out infinite;
+}
+
+@keyframes vc-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+/* ---------- 分节 ---------- */
+.vc-sec {
+  padding: 2.8rem 0;
+  border-top: 1px dashed var(--line);
+}
+
+.vc-cmd {
+  font-size: 0.85rem;
+  color: var(--bright);
+  margin-bottom: 1.6rem;
+  word-break: break-all;
+}
+
+.vc-prompt {
+  color: var(--green);
+}
+
+.vc-tilde {
+  color: #6ea8ff;
+}
+
+.vc-colon {
+  color: var(--dim);
+}
+
+/* team */
+.vc-ls {
+  margin: 0 0 2rem;
+  font-size: 0.75rem;
+  line-height: 2;
+  color: var(--dim);
+  white-space: pre-wrap;
+}
+
+.vc-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.vc-card h3 {
+  font-size: 1rem;
+  color: var(--bright);
+  margin: 0 0 0.5rem;
+  font-weight: 700;
+}
+
+.vc-kv {
+  font-size: 0.78rem;
+  margin: 0 0 0.5rem;
+  color: var(--fg);
+}
+
+.vc-kv span {
+  color: var(--amber);
+}
+
+.vc-bio {
+  font-size: 0.8rem;
+  line-height: 1.9;
+  color: var(--fg);
+  margin: 0 0 0.6rem;
+  max-width: 44em;
+}
+
+.vc-card a,
+.vc-links a,
+.vc-foot a {
+  color: var(--green);
+  text-decoration: none;
+  font-size: 0.78rem;
+}
+
+.vc-card a:hover,
+.vc-links a:hover,
+.vc-foot a:hover {
+  background: var(--green);
+  color: var(--bg);
+}
+
+/* outcomes 表格 */
+.vc-table {
+  margin: 0;
+  font-size: clamp(0.6rem, 1.9vw, 0.8rem);
+  line-height: 1.9;
+  color: var(--fg);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.vc-note {
+  color: var(--dim);
+  font-size: 0.72rem;
+  line-height: 1.9;
+  margin: 0.8rem 0 0;
+}
+
+/* publications */
+.vc-pubs {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.vc-fig {
+  color: var(--amber);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  margin: 0 0 0.5rem;
+}
+
+.vc-pub h3 {
+  color: var(--bright);
+  font-size: 0.95rem;
+  line-height: 1.7;
+  margin: 0 0 0.4rem;
+  font-weight: 700;
+}
+
+.vc-authors {
+  font-size: 0.75rem;
+  color: var(--dim);
+  margin: 0 0 0.5rem;
+}
+
+.vc-lab {
+  color: var(--fg);
+  font-weight: 700;
+}
+
+.vc-links {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* culture */
+.vc-phrase {
+  font-size: clamp(2rem, 7vw, 4.2rem);
+  color: var(--bright);
+  font-weight: 700;
+  margin: 0 0 0.6rem;
+}
+
+.vc-rules {
+  list-style: none;
+  padding: 0;
+  margin: 1.6rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.vc-rules strong {
+  color: var(--green);
+  font-size: 0.85rem;
+}
+
+.vc-rules p {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.9;
+  color: var(--fg);
+  padding-left: 1.2rem;
+}
+
+/* contact */
+.vc-aud {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1.6rem;
+  font-size: 0.8rem;
+  line-height: 2.1;
+  color: var(--fg);
+}
+
+.vc-mailrow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.vc-mailrow code {
+  font-size: clamp(1.1rem, 3.4vw, 1.8rem);
+  color: var(--bright);
+  font-weight: 700;
+}
+
+.vc-mailrow button {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--green);
+  background: none;
+  border: 1px dashed var(--green);
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+}
+
+.vc-mailrow button:hover {
+  background: var(--green);
+  color: var(--bg);
+}
+
+/* 页脚 */
+.vc-foot {
+  border-top: 1px dashed var(--line);
+  padding: 1.6rem 0 5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  font-size: 0.7rem;
+  color: var(--dim);
+}
+
+/* 返回 LAB */
+.vc-labback {
+  position: fixed;
+  left: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  color: var(--bg);
+  background: var(--green);
+  padding: 0.5rem 0.8rem;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.vc-labback:hover {
+  background: var(--bright);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vc * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
