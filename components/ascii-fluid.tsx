@@ -396,7 +396,7 @@ function safeAreaFactor(
   safeArea: LocalRect | null,
   x: number,
   y: number,
-  fadeSize = 76,
+  fadeSize = 60,
 ) {
   if (!safeArea) return 1;
 
@@ -456,7 +456,7 @@ export function AsciiFluid({ className }: { className?: string }) {
     const splashes: Splash[] = [];
 
     const updateSafeArea = () => {
-      const safeElement = canvas.parentElement?.querySelector<HTMLElement>(
+      const safeElement = canvas.closest("section")?.querySelector<HTMLElement>(
         "[data-fluid-safe-area]",
       );
       if (!safeElement) {

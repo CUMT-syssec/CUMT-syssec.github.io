@@ -48,20 +48,7 @@ body {
   outline-color: var(--color-sky);
 }
 
-/* ---------- 首屏：深色底、极弱网格、一道柔光 ---------- */
-
-.hero-grid {
-  background-image:
-    linear-gradient(to right, rgb(145 183 255 / 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(145 183 255 / 0.04) 1px, transparent 1px);
-  background-size: 72px 72px;
-  /* 仅在标题附近略微可见，向边缘消退 */
-  mask-image: radial-gradient(
-    ellipse 88% 68% at 50% 40%,
-    black 15%,
-    transparent 72%
-  );
-}
+/* ---------- 首屏：深色底与一道柔光 ---------- */
 
 .spotlight {
   background: radial-gradient(
@@ -84,6 +71,40 @@ body {
   -webkit-mask-repeat: no-repeat;
   mask-size: 100% 100%;
   -webkit-mask-size: 100% 100%;
+}
+
+/* 黑白视频明暗变化时，仅通过反差混合保持辅助文字可读。 */
+.hero-adaptive-copy {
+  color: #fff;
+  opacity: 0.82;
+  mix-blend-mode: difference;
+}
+
+/* ---------- 教师轮盘：上下渐隐，详情切换保持克制 ---------- */
+
+.teacher-option-wheel {
+  mask-image: linear-gradient(
+    to bottom,
+    transparent,
+    black 16%,
+    black 84%,
+    transparent
+  );
+}
+
+.teacher-detail-in {
+  animation: teacher-detail-in 0.28s ease-out both;
+}
+
+@keyframes teacher-detail-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes spotlight-in {
@@ -119,7 +140,8 @@ body {
   }
   .spotlight,
   .brand-settle,
-  .hero-ascii-fluid {
+  .hero-ascii-fluid,
+  .teacher-detail-in {
     animation: none;
   }
   .hero-ascii-fluid {

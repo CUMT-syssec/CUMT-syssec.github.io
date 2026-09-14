@@ -9,29 +9,27 @@ import { EncryptedText } from "./encrypted-text";
 export function Hero({ site }: { site: SiteInfo }) {
   return (
     <section className="relative flex min-h-svh flex-col items-center justify-center overflow-hidden bg-night px-6 py-32 text-center text-snow">
-      <div aria-hidden className="hero-grid absolute inset-0" />
       <div aria-hidden className="spotlight absolute inset-0" />
       <AsciiFluid className="hero-ascii-fluid pointer-events-none absolute inset-0 h-full w-full" />
 
-      <div
-        data-fluid-safe-area
-        className="relative mx-auto w-full max-w-[1200px]"
-      >
+      <div className="relative mx-auto w-full max-w-[1200px]">
         {/* 等宽字体稳定解密字符宽度，窄屏允许自然换行。 */}
         <h1 className="brand-settle font-mono text-[clamp(1.5rem,5vw,5.625rem)] leading-[1.15] font-extrabold tracking-[-0.02em] break-words text-brand">
-          <EncryptedText text={site.welcome} />
+          <span data-fluid-safe-area className="inline-block max-w-full">
+            <EncryptedText text={site.welcome} />
+          </span>
         </h1>
 
-        <p className="mt-6 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-2 text-sm leading-relaxed text-mist md:mt-8 md:text-base">
+        <p className="hero-adaptive-copy mt-6 flex flex-wrap items-baseline justify-center gap-x-3 gap-y-2 text-sm leading-relaxed md:mt-8 md:text-base">
           <span>{site.zhName}</span>
           <span>{site.affiliation}</span>
         </p>
 
-        <p className="mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-mist md:mt-6 md:text-base">
+        <p className="hero-adaptive-copy mt-5 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm md:mt-6 md:text-base">
           {site.directions.map((d, i) => (
             <span key={d} className="flex items-center gap-4">
               {i > 0 && (
-                <span aria-hidden className="text-mist/50">
+                <span aria-hidden className="opacity-50">
                   ·
                 </span>
               )}
