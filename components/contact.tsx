@@ -1,6 +1,7 @@
 import type { SiteInfo } from "@/lib/types";
 import { CopyEmail } from "./copy-email";
 import { Reveal } from "./reveal";
+import { TermCard } from "./term-card";
 
 /**
  * 联系我们：简短邀请、适用人群与邮箱。
@@ -21,7 +22,15 @@ export function Contact({ site }: { site: SiteInfo }) {
           >
             对这些研究问题感兴趣，欢迎交流。
           </h2>
-          <ul className="mt-8 space-y-2 text-[15px] leading-[1.75] text-mist">
+          <div className="mx-auto mt-10 max-w-[560px]">
+            <TermCard
+              dark
+              label="contact"
+              cmd={`mail -s "join" ${site.email}`}
+              lines={[<span key="r">&gt; 期待你的来信。</span>]}
+            />
+          </div>
+          <ul className="mt-10 space-y-2 text-[15px] leading-[1.75] text-mist">
             {site.audience.map((a) => (
               <li key={a}>{a}</li>
             ))}

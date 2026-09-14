@@ -16,6 +16,7 @@ import { Contact } from "@/components/contact";
 import { Footer } from "@/components/footer";
 import { FooterReveal } from "@/components/footer-reveal";
 import "./home-motion.css";
+import "./term.css";
 
 /**
  * 唯一主页面：只负责组装。

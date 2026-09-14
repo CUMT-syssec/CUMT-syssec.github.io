@@ -1,6 +1,7 @@
 import type { CultureContent } from "@/lib/types";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
+import { TermCard } from "./term-card";
 
 /**
  * 我们如何做研究：回到深色背景，形成第二个视觉记忆点。
@@ -15,6 +16,20 @@ export function Culture({ culture }: { culture: CultureContent }) {
     >
       <div className="mx-auto max-w-[880px] px-6 py-[64px] md:py-[104px]">
         <SectionHeading id="culture-title" title="我们如何做研究" dark />
+
+        <div className="mb-10 max-w-[560px] md:mb-12">
+          <TermCard
+            dark
+            label="culture"
+            cmd="cat culture.md"
+            lines={[
+              <span key="p" className="term-strong">
+                # {culture.phrase}
+              </span>,
+              <span key="s">&gt; {culture.sub}</span>,
+            ]}
+          />
+        </div>
 
         <div className="space-y-5">
           {culture.rules.map((r, i) => (

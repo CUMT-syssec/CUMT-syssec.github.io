@@ -1,0 +1,176 @@
+/* Sarasa Fixed SC：终端条中英 2:1 严格等宽（子集自托管，见 public/fonts） */
+@font-face {
+  font-family: "Sarasa Fixed SC";
+  src: url("/fonts/sarasa-fixed-sc-Regular.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sarasa Fixed SC";
+  src: url("/fonts/sarasa-fixed-sc-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 章节终端条样式：浅底纸面 / 深底夜色两套，bare 变体无外框 */
+.term {
+  font-family: "Sarasa Fixed SC", var(--font-mono);
+  text-align: left;
+}
+
+.term-card {
+  background: var(--color-surface);
+  border: 1px solid rgb(21 27 38 / 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 12px 32px -22px rgb(21 27 38 / 0.28);
+}
+
+.term-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.5rem 0.9rem;
+  border-bottom: 1px solid rgb(21 27 38 / 0.08);
+  background: rgb(21 27 38 / 0.03);
+}
+
+.term-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: rgb(21 27 38 / 0.14);
+}
+
+.term-tab {
+  margin-left: 0.35rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  color: var(--color-aux);
+}
+
+.term-body {
+  padding: 0.85rem 1.05rem 1rem;
+  font-size: clamp(0.8rem, 0.4vw + 0.7rem, 0.92rem);
+  line-height: 1.9;
+}
+
+.term-line {
+  white-space: pre-wrap;
+  word-break: break-word;
+  min-height: 1.1em;
+}
+
+.term-prompt {
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.term-tilde {
+  color: var(--color-brand);
+}
+
+.term-dim {
+  color: var(--color-aux);
+}
+
+.term-out {
+  color: var(--color-body);
+}
+
+.term-out .term-strong {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.term-dir {
+  color: var(--color-accent);
+}
+
+.term-caret {
+  display: inline-block;
+  width: 0.58em;
+  height: 1em;
+  background: var(--color-accent);
+  vertical-align: -0.12em;
+  margin-left: 0.1em;
+}
+
+.term-caret--blink {
+  animation: term-blink 1.05s steps(1) infinite;
+}
+
+@keyframes term-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* 深色区块 */
+.term--dark .term-card {
+  background: rgb(255 255 255 / 0.04);
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow: none;
+}
+
+.term--dark .term-head {
+  background: rgb(255 255 255 / 0.03);
+  border-color: rgb(255 255 255 / 0.08);
+}
+
+.term--dark .term-dot {
+  background: rgb(255 255 255 / 0.16);
+}
+
+.term--dark .term-tab {
+  color: #7c8798;
+}
+
+.term--dark .term-prompt {
+  color: var(--color-sky);
+}
+
+.term--dark .term-tilde {
+  color: #c9a86a;
+}
+
+.term--dark .term-dim {
+  color: #6b7688;
+}
+
+.term--dark .term-out {
+  color: var(--color-mist);
+}
+
+.term--dark .term-out .term-strong {
+  color: var(--color-snow);
+}
+
+.term--dark .term-dir {
+  color: var(--color-sky);
+}
+
+.term--dark .term-caret {
+  background: var(--color-sky);
+}
+
+/* 无外框（首屏）：融进背景 */
+.term--bare .term-card {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.term--bare .term-body {
+  padding: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .term-caret--blink {
+    animation: none;
+  }
+}

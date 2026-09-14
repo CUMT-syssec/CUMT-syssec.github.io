@@ -8,6 +8,7 @@ import {
 } from "motion/react";
 import type { SiteInfo } from "@/lib/types";
 import { EncryptedText } from "./encrypted-text";
+import { TermCard } from "./term-card";
 
 /**
  * 首屏：品牌立即可读，动效只负责气氛。
@@ -82,6 +83,20 @@ export function Hero({
             </span>
           ))}
         </p>
+
+        <div className="mx-auto mt-10 max-w-[520px] md:mt-12">
+          <TermCard
+            dark
+            bare
+            label="boot"
+            cmd="whoami"
+            lines={[
+              <span key="w" className="term-strong">
+                cumt-syssec —— 做真实构建、真实运行的系统安全研究。
+              </span>,
+            ]}
+          />
+        </div>
       </motion.div>
 
       <motion.div

@@ -7,6 +7,7 @@ import {
 } from "@/lib/publications";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
+import { TermCard } from "./term-card";
 
 /**
  * 科研成果：代表性论文清单，同一连续列表，按正式发表年份从新到旧。
@@ -14,6 +15,12 @@ import { Reveal } from "./reveal";
  */
 export function Publications({ publications }: { publications: Publication[] }) {
   const sorted = sortPublications(publications);
+  const ccfACount = publications.filter((p) =>
+    p.badges?.some((b) => b.includes("CCF-A")),
+  ).length;
+  const summary = `# ${publications.length} 篇代表作${
+    ccfACount ? ` · CCF-A ×${ccfACount}` : ""
+  }`;
 
   return (
     <section
@@ -26,6 +33,24 @@ export function Publications({ publications }: { publications: Publication[] }) 
         title="科研成果"
         sub="围绕系统安全问题，构建可验证、可落地的研究成果。"
       />
+      <div className="mb-10 max-w-[560px] md:mb-12">
+        <TermCard
+          label="pubs"
+          cmd="ls ./pubs"
+          lines={[
+            <span key="dirs">
+              {sorted.map((p) => (
+                <span key={p.id} className="term-dir">
+                  {p.id}/{"  "}
+                </span>
+              ))}
+            </span>,
+            <span key="sum" className="term-dim">
+              {summary}
+            </span>,
+          ]}
+        />
+      </div>
       <Reveal delay={60}>
         <ol>
           {sorted.map((p) => (

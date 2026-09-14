@@ -1,6 +1,7 @@
 import type { Teacher } from "@/lib/types";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
+import { TermCard } from "./term-card";
 
 /** 主要教师：同级并列的简短介绍，桌面双列、手机单列。 */
 export function Teachers({ teachers }: { teachers: Teacher[] }) {
@@ -11,6 +12,22 @@ export function Teachers({ teachers }: { teachers: Teacher[] }) {
         title="主要教师"
         sub="认识与你一起做研究的人。"
       />
+      <div className="mb-10 max-w-[560px] md:mb-12">
+        <TermCard
+          label="team"
+          cmd="ls ./team"
+          lines={[
+            <span key="dirs">
+              {teachers.map((t, i) => (
+                <span key={t.id}>
+                  <span className="term-dir">{t.id}/</span>
+                  {i < teachers.length - 1 ? "  " : ""}
+                </span>
+              ))}
+            </span>,
+          ]}
+        />
+      </div>
       <div className="grid gap-x-10 gap-y-10 md:grid-cols-2">
         {teachers.map((t) => (
           <Reveal key={t.id} className="min-w-0">

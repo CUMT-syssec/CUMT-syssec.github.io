@@ -2,6 +2,7 @@ import type { CohortOutcomes, Organization } from "@/lib/types";
 import { orgName, sortCohorts } from "@/lib/outcomes";
 import { SectionHeading } from "./section-heading";
 import { Reveal } from "./reveal";
+import { TermCard } from "./term-card";
 
 /**
  * 学生去向：按毕业届别分行展示。
@@ -20,6 +21,15 @@ export function Outcomes({
   const name = (id: string) => orgName(id, organizations);
   const internships = internshipOrgIds.map(name);
 
+  // 终端条统计：往届去重院校数 / 本届申请中院校数 / 实习企业数
+  const finalOrgCount = new Set(
+    sorted.filter((c) => c.stage === "final").flatMap((c) => c.orgIds),
+  ).size;
+  const current = sorted.find((c) => c.stage === "current");
+  const summary = `# 往届去向 ${finalOrgCount} 校${
+    current ? ` · 本届申请中 ${current.orgIds.length} 校` : ""
+  }${internships.length ? ` · 实习 ${internships.length} 家` : ""}`;
+
   return (
     <section
       id="outcomes"
@@ -31,6 +41,26 @@ export function Outcomes({
         title="学生去向"
         sub="从这里出发，走向各自的下一站。"
       />
+
+      <div className="mb-10 max-w-[560px] md:mb-12">
+        <TermCard
+          label="paths"
+          cmd="ls ./paths"
+          lines={[
+            <span key="dirs">
+              {sorted.map((c) => (
+                <span key={c.cohort} className="term-dir">
+                  {c.cohort}/{"  "}
+                </span>
+              ))}
+              {internships.length > 0 && <span className="term-dir">intern/</span>}
+            </span>,
+            <span key="sum" className="term-dim">
+              {summary}
+            </span>,
+          ]}
+        />
+      </div>
 
       <Reveal delay={60}>
         <div className="max-w-[760px] border-t border-ink/10">
