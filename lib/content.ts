@@ -4,7 +4,7 @@ import { outcomeCohorts, internshipOrgIds } from "@/content/outcomes";
 import { organizations } from "@/content/organizations";
 import { publications } from "@/content/publications";
 import { culture } from "@/content/culture";
-import { directionGroups } from "@/content/directions";
+import { directions } from "@/content/directions";
 import { validateContent } from "./validate";
 
 /**
@@ -19,7 +19,7 @@ validateContent({
   organizations,
   publications,
   culture,
-  directionGroups,
+  directions,
 });
 
 export {
@@ -30,5 +30,5 @@ export {
   organizations,
   publications,
   culture,
-  directionGroups,
+  directions,
 };

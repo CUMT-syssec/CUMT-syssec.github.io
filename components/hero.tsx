@@ -57,7 +57,7 @@ export function Hero({ site }: { site: SiteInfo }) {
       </div>
 
       <a
-        href="#teachers"
+        href="#directions"
         className="absolute bottom-12 inline-flex items-center gap-2 text-sm text-body transition-colors hover:text-accent"
       >
         向下了解

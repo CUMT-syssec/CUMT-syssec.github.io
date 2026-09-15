@@ -199,6 +199,22 @@
   display: block;
 }
 
+/* man 页眉/页脚：左/中/右三段（真实 man 用空格补齐，这里 flex 达到同一效果） */
+.t-manhead {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* man 段正文：真实 tty 输出缩进 7 列；Sarasa 严格 2:1 等宽，1ch 即一个半角列 */
+.t-manin {
+  padding-left: 7ch;
+}
+
+/* SEE ALSO 链接行：t-block 悬停反馈不变，文字仍落在 7 列缩进上 */
+.t-block.t-manlink {
+  padding-left: calc(0.55rem + 7ch);
+}
+
 /* 去向行：年 / 学校 / 阶段 三列对齐 */
 .t-row {
   display: grid;
