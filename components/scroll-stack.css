@@ -21,6 +21,15 @@
 /* 首卡（首屏）保留接近整屏的高度，开屏仍有“一屏”的仪式感 */
 .scroll-stack-scroller--static .scroll-stack-card:first-child {
   min-height: 92svh;
+  /* 卡高由 min-height 撑出、height 是 auto，首屏 section 的 h-full 无法解析，
+     会塌缩成内容条（Aurora 只刷一条、向下了解 浮到内容下方）——
+     改让首卡做 flex 列容器，首屏 section 用 flex:1 吃满整卡 */
+  display: flex;
+  flex-direction: column;
+}
+
+.scroll-stack-scroller--static .scroll-stack-card:first-child > :first-child {
+  flex: 1;
 }
 
 .scroll-stack-scroller--static .site-slide {
