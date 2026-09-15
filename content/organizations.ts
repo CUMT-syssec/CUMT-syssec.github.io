@@ -18,4 +18,6 @@ export const organizations: Organization[] = [
   { id: "sjtu", name: "上海交通大学", kind: "高校" },
   { id: "huawei", name: "华为", kind: "企业" },
   { id: "ant", name: "蚂蚁集团", kind: "企业" },
+  { id: "nsfocus", name: "绿盟科技", kind: "企业" },
+  { id: "state-sec", name: "国家相关安全部门" },
 ];

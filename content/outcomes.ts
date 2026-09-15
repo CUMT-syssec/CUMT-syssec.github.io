@@ -22,4 +22,4 @@ export const outcomeCohorts: CohortOutcomes[] = [
 ];
 
 /** 实习去向：同学曾前往实习的企业（实验室提供） */
-export const internshipOrgIds: string[] = ["huawei", "ant"];
+export const internshipOrgIds: string[] = ["huawei", "ant", "nsfocus", "state-sec"];

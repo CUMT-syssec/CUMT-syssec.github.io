@@ -43,7 +43,7 @@ export function Outcomes({
                   <span>
                     {c.stage === "final"
                       ? c.orgIds.map(name).join("、")
-                      : `${c.orgIds.map(name).join("、")}（申请中）`}
+                      : `${c.orgIds.map(name).join("、")}（已获得 Offer）`}
                   </span>
                   <span className="t-meta">
                     {c.stage === "final" ? "final" : "current"}
@@ -64,14 +64,6 @@ export function Outcomes({
                   },
                 ]
               : []),
-            { node: " ", cls: "t-gap" },
-            {
-              node: (
-                <span className="t-meta">
-                  * 按毕业届别公开到单位一级，不记名；本届为申请阶段信息，不计入统计。
-                </span>
-              ),
-            },
           ]}
         />
       </div>

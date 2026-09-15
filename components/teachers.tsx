@@ -21,7 +21,7 @@ export function Teachers({ teachers }: { teachers: Teacher[] }) {
       <div className="mx-auto max-w-[720px]">
         <TermCard
           label="team"
-          cmd="cat 01-team.md"
+          cmd="cat team.md"
           lines={teachers.flatMap((t) => [
             {
               node: (

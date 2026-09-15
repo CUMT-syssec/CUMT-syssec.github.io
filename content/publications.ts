@@ -21,7 +21,7 @@ export const publications: Publication[] = [
     venue: "IEEE Symposium on Security and Privacy (S&P)",
     year: 2026,
     status: "published",
-    badges: ["CCF-A"],
+    badges: ["Poster", "CCF-A"],
     links: [
       {
         kind: "pdf",

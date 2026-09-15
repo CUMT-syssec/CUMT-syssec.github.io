@@ -19,6 +19,7 @@ export const site: SiteInfo = {
   footerLinks: [
     { label: "学院主页", href: "https://cs.cumt.edu.cn" },
     { label: "GitHub", href: "https://github.com/CUMT-syssec" },
+    { label: "矿山终端", href: "https://ctf.cumt.edu.cn/" },
   ],
   lastVerified: "2026-09-13",
 };
