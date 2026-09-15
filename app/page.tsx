@@ -15,6 +15,7 @@ import { Culture } from "@/components/culture";
 import { Contact } from "@/components/contact";
 import { Footer } from "@/components/footer";
 import ScrollStack, { ScrollStackItem } from "@/components/scroll-stack";
+import "./term.css";
 
 /**
  * 唯一主页面：幻灯片式整页体验，白色风格。
