@@ -1,5 +1,6 @@
 import {
   culture,
+  directionGroups,
   internshipOrgIds,
   organizations,
   outcomeCohorts,
@@ -8,6 +9,7 @@ import {
   teachers,
 } from "@/lib/content";
 import { Hero } from "@/components/hero";
+import { Directions } from "@/components/directions";
 import { Teachers } from "@/components/teachers";
 import { Outcomes } from "@/components/outcomes";
 import { Publications } from "@/components/publications";
@@ -29,6 +31,14 @@ export default function Home() {
       <ScrollStack>
         <ScrollStackItem itemClassName="site-slide site-slide--paper">
           <Hero site={site} />
+        </ScrollStackItem>
+
+        <ScrollStackItem itemClassName="site-slide site-slide--paper">
+          <div className="site-slide-body">
+            <div className="mx-auto my-auto w-full max-w-[880px] px-6 py-4 md:px-8">
+              <Directions groups={directionGroups} />
+            </div>
+          </div>
         </ScrollStackItem>
 
         <ScrollStackItem itemClassName="site-slide site-slide--paper">

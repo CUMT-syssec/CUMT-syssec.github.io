@@ -123,3 +123,20 @@ export interface CultureContent {
   /** 真实机制说明：短标题 + 一两句具体解释 */
   rules: { title: string; body: string }[];
 }
+
+/** 研究方向条目 */
+export interface ResearchDirection {
+  id: string;
+  name: string;
+  /** 一句话说明：研究什么、需要什么基础 */
+  blurb?: string;
+  /** 延伸入口（书单、参考文档），只放真实存在的链接 */
+  links?: ExternalLink[];
+}
+
+/** 研究方向分组：主方向与"其他方向"分开陈列 */
+export interface DirectionGroup {
+  /** 组名，如 "研究方向"、"其他研究方向" */
+  title: string;
+  items: ResearchDirection[];
+}
