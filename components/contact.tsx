@@ -16,7 +16,7 @@ export function Contact({ site }: { site: SiteInfo }) {
       <SectionHeading
         id="contact-title"
         title="对这些研究问题感兴趣，欢迎交流。"
-        sub="终端常开，期待你的来信。"
+        sub="端口常开，欢迎来聊。"
         titleSpans={["对这些研究问题感兴趣，", "欢迎交流。"]}
       />
       <div className="mx-auto max-w-[640px] text-left">
