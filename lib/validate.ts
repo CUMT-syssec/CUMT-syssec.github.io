@@ -1,4 +1,5 @@
 import type {
+  DirectionGroup,
   Organization,
   Publication,
   SiteInfo,
@@ -25,6 +26,7 @@ export function validateContent(data: {
   organizations: Organization[];
   publications: Publication[];
   culture: CultureContent;
+  directionGroups: DirectionGroup[];
 }): void {
   const problems: string[] = [];
   const {
@@ -35,6 +37,7 @@ export function validateContent(data: {
     organizations,
     publications,
     culture,
+    directionGroups,
   } = data;
 
   // 站点信息
@@ -123,6 +126,23 @@ export function validateContent(data: {
     if (!r.title.trim() || !r.body.trim())
       problems.push(`culture.rules[${i}]: 标题或解释为空`);
   });
+
+  // 研究方向
+  const dirIds = new Set<string>();
+  if (directionGroups.length === 0) problems.push("directionGroups 为空");
+  for (const g of directionGroups) {
+    if (!g.title.trim()) problems.push("directionGroups: 存在 unnamed 分组");
+    if (g.items.length === 0)
+      problems.push(`方向分组 ${g.title}: 条目为空`);
+    for (const d of g.items) {
+      if (dirIds.has(d.id)) problems.push(`方向 id 重复: ${d.id}`);
+      dirIds.add(d.id);
+      if (!d.name.trim()) problems.push(`方向 ${d.id}: 名称为空`);
+      d.links?.forEach((l, i) =>
+        checkLink(l.href, `方向 ${d.id} links[${i}]`, problems),
+      );
+    }
+  }
 
   if (problems.length > 0) {
     throw new Error(
