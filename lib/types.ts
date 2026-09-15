@@ -123,3 +123,11 @@ export interface CultureContent {
   /** 真实机制说明：短标题 + 一两句具体解释 */
   rules: { title: string; body: string }[];
 }
+
+/** 研究方向（man directions 手册页式陈列） */
+export interface DirectionsContent {
+  /** NAME 段条目：方向 + 一句话描述（name - description 格式） */
+  entries: { id: string; name: string; desc: string }[];
+  /** SEE ALSO 段：入门书目与参考资料，只放真实存在的链接 */
+  seeAlso: ExternalLink[];
+}

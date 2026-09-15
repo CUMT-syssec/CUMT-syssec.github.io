@@ -1,4 +1,5 @@
 import type {
+  DirectionsContent,
   Organization,
   Publication,
   SiteInfo,
@@ -25,6 +26,7 @@ export function validateContent(data: {
   organizations: Organization[];
   publications: Publication[];
   culture: CultureContent;
+  directions: DirectionsContent;
 }): void {
   const problems: string[] = [];
   const {
@@ -35,6 +37,7 @@ export function validateContent(data: {
     organizations,
     publications,
     culture,
+    directions,
   } = data;
 
   // 站点信息
@@ -123,6 +126,22 @@ export function validateContent(data: {
     if (!r.title.trim() || !r.body.trim())
       problems.push(`culture.rules[${i}]: 标题或解释为空`);
   });
+
+  // 研究方向（man 手册页：NAME + SEE ALSO）
+  const dirIds = new Set<string>();
+  if (directions.entries.length < 2 || directions.entries.length > 5)
+    problems.push("directions.entries 应为 2—5 条");
+  for (const d of directions.entries) {
+    if (dirIds.has(d.id)) problems.push(`方向 id 重复: ${d.id}`);
+    dirIds.add(d.id);
+    if (!d.name.trim()) problems.push(`方向 ${d.id}: 名称为空`);
+    if (!d.desc.trim()) problems.push(`方向 ${d.id}: 描述为空`);
+  }
+  if (directions.seeAlso.length === 0)
+    problems.push("directions.seeAlso 为空（SEE ALSO 段至少一条）");
+  directions.seeAlso.forEach((l, i) =>
+    checkLink(l.href, `directions.seeAlso[${i}]`, problems),
+  );
 
   if (problems.length > 0) {
     throw new Error(

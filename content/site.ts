@@ -9,7 +9,7 @@ export const site: SiteInfo = {
   welcome: "Welcome to CUMT-SYSSEC",
   zhName: "系统安全实验室",
   affiliation: "中国矿业大学 计算机科学与技术学院/人工智能学院",
-  directions: ["系统安全与优化", "虚拟化", "云计算安全", "Agent 安全"],
+  directions: ["内核安全", "软件反编译工程", "云计算安全", "Agent 安全"],
   email: "liyg@cumt.edu.cn",
   audience: [
     "课题组长期招募优秀博士毕业生",

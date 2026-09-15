@@ -16,6 +16,19 @@ export const teachers: Teacher[] = [
     ],
   },
   {
+    id: "bao-yu",
+    name: "鲍宇",
+    roles: ["副教授"],
+    directions: ["人工智能与异常检测", "深度学习模型约简", "智能网络安全"],
+    bio: "同济大学计算机软件与理论博士，研究涉及人工智能与异常检测、深度学习模型约简、智能网络安全，以及深度可信物联系统。",
+    links: [
+      {
+        label: "教师主页",
+        href: "https://faculty.cumt.edu.cn/BY12/zh_CN/index.htm",
+      },
+    ],
+  },
+  {
     id: "liu-shang",
     name: "刘上",
     roles: ["副教授", "网络空间安全系副主任"],
@@ -51,19 +64,6 @@ export const teachers: Teacher[] = [
       {
         label: "教师主页",
         href: "https://faculty.cumt.edu.cn/cs_zgma/zh_CN/index.htm",
-      },
-    ],
-  },
-  {
-    id: "bao-yu",
-    name: "鲍宇",
-    roles: ["副教授"],
-    directions: ["人工智能与异常检测", "深度学习模型约简", "智能网络安全"],
-    bio: "同济大学计算机软件与理论博士，研究涉及人工智能与异常检测、深度学习模型约简、智能网络安全，以及深度可信物联系统。",
-    links: [
-      {
-        label: "教师主页",
-        href: "https://faculty.cumt.edu.cn/BY12/zh_CN/index.htm",
       },
     ],
   },

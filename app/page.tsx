@@ -1,5 +1,6 @@
 import {
   culture,
+  directions,
   internshipOrgIds,
   organizations,
   outcomeCohorts,
@@ -8,6 +9,7 @@ import {
   teachers,
 } from "@/lib/content";
 import { Hero } from "@/components/hero";
+import { Directions } from "@/components/directions";
 import { Teachers } from "@/components/teachers";
 import { Outcomes } from "@/components/outcomes";
 import { Publications } from "@/components/publications";
@@ -19,7 +21,7 @@ import "./term.css";
 
 /**
  * 唯一主页面：幻灯片式整页体验，白色风格。
- * 六张接近全屏的白色卡片：首屏（Aurora + ASCII 流体）→ 教师 → 去向 → 论文 → 文化 → 联系+页脚。
+ * 七张接近全屏的白色卡片：首屏（Aurora + ASCII 流体）→ 研究方向 → 教师 → 去向 → 论文 → 文化 → 联系+页脚。
  * 滚动时新卡从下方滑入盖住旧卡、旧卡缩小退层，形成牌组式翻页（ScrollStack + Lenis 平滑滚动）。
  * 布局约定：正文容器统一 max-w-[880px]；内容块 my-auto 垂直居中（放不下自动顶对齐滚动）。
  */
@@ -29,6 +31,14 @@ export default function Home() {
       <ScrollStack>
         <ScrollStackItem itemClassName="site-slide site-slide--paper">
           <Hero site={site} />
+        </ScrollStackItem>
+
+        <ScrollStackItem itemClassName="site-slide site-slide--paper">
+          <div className="site-slide-body">
+            <div className="mx-auto my-auto w-full max-w-[880px] px-6 py-4 md:px-8">
+              <Directions directions={directions} />
+            </div>
+          </div>
         </ScrollStackItem>
 
         <ScrollStackItem itemClassName="site-slide site-slide--paper">
