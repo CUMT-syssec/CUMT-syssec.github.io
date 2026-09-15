@@ -1,4 +1,6 @@
 **/**.md
+# Next.js 路由目录 app/ai.md/ 是 /ai.md 静态端点的源码，不是笔记
+!app/ai.md/
 .omx
 .claude
 .codex

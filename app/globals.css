@@ -192,3 +192,73 @@ body::after {
     display: none;
   }
 }
+
+/* ---------- 人类的观看 / AI 的观看：顶部中央切换 ---------- */
+
+/* 固定在顶部留白带的正中央：带高 = 4vh（scroll-stack-inner padding-top），
+   药丸垂直居中于带内，不再压住卡片顶边；浅底细边无投影，尽量不侵入 */
+.view-toggle {
+  position: fixed;
+  top: calc(2vh - 0.62rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.22rem 0.7rem;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgb(21 27 38 / 0.06);
+  font-family: "Sarasa Fixed SC", var(--font-mono);
+  font-size: 0.68rem;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  color: var(--color-aux);
+  opacity: 0.85;
+  transition: opacity 0.15s ease;
+}
+
+.view-toggle:hover,
+.view-toggle:focus-within {
+  opacity: 1;
+}
+
+.view-toggle a {
+  color: inherit;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.view-toggle a:hover {
+  color: var(--color-accent);
+}
+
+.view-toggle a.is-active {
+  color: var(--color-ink);
+  font-weight: 700;
+}
+
+.view-toggle-sep {
+  opacity: 0.35;
+}
+
+@media print {
+  .view-toggle {
+    display: none;
+  }
+}
+
+/* ---------- AI 的观看：整页一份 Markdown 源 ---------- */
+
+.ai-md {
+  font-family: "Sarasa Fixed SC", var(--font-mono);
+  font-size: clamp(0.8rem, 0.3vw + 0.74rem, 0.875rem);
+  line-height: 1.85;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: none;
+  color: var(--color-ink);
+}
