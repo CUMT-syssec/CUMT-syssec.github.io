@@ -17,6 +17,7 @@ import { Culture } from "@/components/culture";
 import { Contact } from "@/components/contact";
 import { Footer } from "@/components/footer";
 import ScrollStack, { ScrollStackItem } from "@/components/scroll-stack";
+import { ViewToggle } from "@/components/view-toggle";
 import "./term.css";
 
 /**
@@ -28,6 +29,7 @@ import "./term.css";
 export default function Home() {
   return (
     <main id="top">
+      <ViewToggle active="human" />
       <ScrollStack>
         <ScrollStackItem itemClassName="site-slide site-slide--paper">
           <Hero site={site} />

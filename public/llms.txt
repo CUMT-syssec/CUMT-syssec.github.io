@@ -1,0 +1,9 @@
+# 系统安全实验室（CUMT-SYSSEC）
+
+> 中国矿业大学 计算机科学与技术学院/人工智能学院。研究方向：内核安全、软件反编译工程、Agent 安全等。
+
+## Views
+
+- [人类的观看](https://cumt-syssec.github.io/): 面向人类的网站主页
+- [AI 的观看](https://cumt-syssec.github.io/ai/): 全部公开内容的 Markdown 页面
+- [ai.md](https://cumt-syssec.github.io/ai.md): 与「AI 的观看」同源的纯 Markdown 文件
