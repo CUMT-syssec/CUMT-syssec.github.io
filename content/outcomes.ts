@@ -18,7 +18,7 @@ export const outcomeCohorts: CohortOutcomes[] = [
   { cohort: 2024, stage: "final", orgIds: ["pku", "cuhk"] },
   { cohort: 2025, stage: "final", orgIds: ["nju", "hkust-gz", "xmu"] },
   { cohort: 2026, stage: "final", orgIds: ["buaa", "nudt"] },
-  { cohort: 2027, stage: "current", orgIds: ["zju", "ustc", "sjtu", "nku", "sdu"] },
+  { cohort: 2027, stage: "current", orgIds: ["zju", "ustc", "sjtu", "nku", "sdu", "xmu"] },
 ];
 
 /** 实习去向：同学曾前往实习的企业（实验室提供） */
