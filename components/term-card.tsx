@@ -1,11 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import {
+  STATIC_LAYOUT_QUERY,
+  subscribeMediaQuery,
+  supportsAnimatedLayout,
+} from "@/lib/motion-support";
 
 /**
  * 章节终端卡片：正文全部装进终端，入视口播放一次"敲命令 → 逐行输出"。
- * 默认渲染完整内容（无 JS / 减少动效 / IO 不可用时即为静态终端，内容可读）；
- * 挂载后若允许动效则清空，等进入视口再重放。
+ * 默认渲染完整内容（触屏 / 窄屏 / 减少动效 / 无 JS 时即为静态终端）；
+ * 桌面挂载后若允许动效则清空，等进入视口再重放。
+ * 流式页面不逐行插入内容，避免滚动中增高卡片、推走后续链接。
  */
 
 export type TermLine = { node: React.ReactNode; cls?: string };
@@ -30,40 +36,64 @@ export function TermCard({
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    // 与 ScrollStack 共用同一能力门槛：只要页面会退化为自然文档流，终端
+    // 就保留完整内容，避免逐行插入再次把页脚和链接往下推。
+    if (!supportsAnimatedLayout()) return;
+    let staticLayout: MediaQueryList;
+    try {
+      staticLayout = window.matchMedia(STATIC_LAYOUT_QUERY);
+    } catch {
+      return;
+    }
     if (!("IntersectionObserver" in window)) return;
 
+    let io: IntersectionObserver | undefined;
+    try {
+      io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) return;
+          io?.disconnect();
+          const timers = timersRef.current;
+          let i = 0;
+          const type = () => {
+            i += 1;
+            setCmdLen(Math.min(i, cmd.length));
+            if (i < cmd.length) {
+              timers.push(window.setTimeout(type, 24));
+            } else {
+              let j = 0;
+              const show = () => {
+                j += 1;
+                setShown(j);
+                if (j < lines.length) timers.push(window.setTimeout(show, 60));
+              };
+              timers.push(window.setTimeout(show, 220));
+            }
+          };
+          timers.push(window.setTimeout(type, 180));
+        },
+        { rootMargin: "0px 0px -14% 0px" },
+      );
+      io.observe(el);
+    } catch {
+      io?.disconnect();
+      // API 虽存在但不可用时维持默认完整内容。
+      return;
+    }
     setCmdLen(0);
     setShown(0);
-
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        io.disconnect();
-        const timers = timersRef.current;
-        let i = 0;
-        const type = () => {
-          i += 1;
-          setCmdLen(Math.min(i, cmd.length));
-          if (i < cmd.length) {
-            timers.push(window.setTimeout(type, 24));
-          } else {
-            let j = 0;
-            const show = () => {
-              j += 1;
-              setShown(j);
-              if (j < lines.length) timers.push(window.setTimeout(show, 60));
-            };
-            timers.push(window.setTimeout(show, 220));
-          }
-        };
-        timers.push(window.setTimeout(type, 180));
-      },
-      { rootMargin: "0px 0px -14% 0px" },
-    );
-    io.observe(el);
+    const showAll = () => {
+      if (!staticLayout.matches) return;
+      io.disconnect();
+      timersRef.current.forEach((t) => clearTimeout(t));
+      timersRef.current = [];
+      setCmdLen(cmd.length);
+      setShown(lines.length);
+    };
+    const unsubscribe = subscribeMediaQuery(staticLayout, showAll);
     return () => {
       io.disconnect();
+      unsubscribe();
       timersRef.current.forEach((t) => clearTimeout(t));
       timersRef.current = [];
     };

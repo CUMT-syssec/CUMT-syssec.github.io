@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { useReducedMotion } from "motion/react";
+
+import { subscribeMediaQuery } from "@/lib/motion-support";
 
 const FONT_STACK =
   '"SFMono-Regular", Consolas, "Liberation Mono", ui-monospace, monospace';
@@ -12,6 +13,11 @@ const CELL_PADDING = { x: 1, y: 2 };
 const CONTRAST = 2;
 const GAMMA = 0.5;
 const VIDEO_SRC = "https://cdn.openai.com/ctf-cdn/floral_a.mp4";
+const ENHANCEMENT_QUERY =
+  "(min-width: 768px) and (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)";
+const MAX_BACKBUFFER_PIXELS = 1_500_000;
+const MAX_BACKBUFFER_SIDE = 2048;
+const MAX_SAMPLE_CELLS = 12_000;
 
 type FluidField = {
   width: number;
@@ -359,30 +365,29 @@ function createGlyphAtlas(
   canvas.height = tileHeight;
   const context = canvas.getContext("2d");
 
-  if (context) {
-    context.setTransform(scale, 0, 0, scale, 0, 0);
-    context.font = `${fontSize}px ${FONT_STACK}`;
-    context.fillStyle = color;
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    const cssTileWidth = tileWidth / scale;
-    const cssTileHeight = tileHeight / scale;
+  if (!context) {
+    canvas.width = 1;
+    canvas.height = 1;
+    throw new Error("ASCII glyph canvas is unavailable");
+  }
 
-    for (let index = 0; index < CHARSET.length; index += 1) {
-      context.fillText(
-        CHARSET[index],
-        index * cssTileWidth + cssTileWidth / 2,
-        cssTileHeight / 2,
-      );
-    }
+  context.setTransform(scale, 0, 0, scale, 0, 0);
+  context.font = `${fontSize}px ${FONT_STACK}`;
+  context.fillStyle = color;
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  const cssTileWidth = tileWidth / scale;
+  const cssTileHeight = tileHeight / scale;
+
+  for (let index = 0; index < CHARSET.length; index += 1) {
+    context.fillText(
+      CHARSET[index],
+      index * cssTileWidth + cssTileWidth / 2,
+      cssTileHeight / 2,
+    );
   }
 
   return { canvas, tileWidth, tileHeight };
-}
-
-function hashCell(x: number, y: number) {
-  const value = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-  return value - Math.floor(value);
 }
 
 function mapLumaToGlyph(luma: number) {
@@ -425,300 +430,436 @@ function safeAreaFactor(
 export function AsciiFluid({ className }: { className?: string }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
-    if (!canvas || !video || reducedMotion) return;
+    if (!canvas || !video || typeof window.matchMedia !== "function") return;
 
-    const context = canvas.getContext("2d");
-    const sampleCanvas = document.createElement("canvas");
-    const sampleContext = sampleCanvas.getContext("2d", {
-      willReadFrequently: true,
-    });
-    if (!context || !sampleContext) return;
+    let mediaQuery: MediaQueryList;
+    let connection: (EventTarget & { saveData?: boolean }) | undefined;
+    try {
+      mediaQuery = window.matchMedia(ENHANCEMENT_QUERY);
+      connection = (navigator as Navigator & {
+        connection?: EventTarget & { saveData?: boolean };
+      }).connection;
+    } catch {
+      canvas.dataset.asciiOverlayState = "disabled";
+      return;
+    }
+    let stopRuntime: (() => void) | null = null;
 
-    let layout: GridLayout | null = null;
-    let field: FluidField | null = null;
-    let atlas: GlyphAtlas | null = null;
-    let safeArea: LocalRect | null = null;
-    let smoothedLuma = new Float32Array(0);
-    let lumaInitialized = false;
-    let animationFrame = 0;
-    let lastFrame = 0;
-    let isIntersecting = true;
-    let activePointerId: number | null = null;
-    let pointerStart: Point | null = null;
-    let previousPointer: Point | null = null;
-    let dragged = false;
-    let videoUnavailable = false;
-    const splashes: Splash[] = [];
-
-    const updateSafeArea = () => {
-      const safeElement = canvas.parentElement?.querySelector<HTMLElement>(
-        "[data-fluid-safe-area]",
+    const hasConstrainedDeviceHint = () => {
+      const deviceMemory = (
+        navigator as Navigator & { deviceMemory?: number }
+      ).deviceMemory;
+      const hardwareConcurrency = navigator.hardwareConcurrency;
+      return (
+        connection?.saveData === true ||
+        (typeof deviceMemory === "number" &&
+          Number.isFinite(deviceMemory) &&
+          deviceMemory > 0 &&
+          deviceMemory <= 4) ||
+        (typeof hardwareConcurrency === "number" &&
+          Number.isFinite(hardwareConcurrency) &&
+          hardwareConcurrency > 0 &&
+          hardwareConcurrency <= 4)
       );
-      if (!safeElement) {
-        safeArea = null;
-        return;
-      }
-
-      const canvasRect = canvas.getBoundingClientRect();
-      const elementRect = safeElement.getBoundingClientRect();
-      safeArea = {
-        left: elementRect.left - canvasRect.left,
-        top: elementRect.top - canvasRect.top,
-        right: elementRect.right - canvasRect.left,
-        bottom: elementRect.bottom - canvasRect.top,
-      };
     };
 
-    const resize = () => {
-      const rect = canvas.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-
-      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-      const pixel = 1 / dpr;
-      const snap = (value: number, minimum = 0) =>
-        Math.max(minimum, Math.round(value * dpr) / dpr);
-      const glyphWidth = snap(FONT_SIZE / (5 / 3), pixel);
-      const glyphHeight = snap(FONT_SIZE, pixel);
-      const padX = snap(CELL_PADDING.x);
-      const padY = snap(CELL_PADDING.y);
-      const cellWidth = Math.max(pixel, glyphWidth + 2 * padX);
-      const cellHeight = Math.max(pixel, glyphHeight + 2 * padY);
-      const columns = Math.max(1, Math.floor(rect.width / cellWidth));
-      const rows = Math.max(1, Math.floor(rect.height / cellHeight));
-
-      canvas.width = Math.max(1, Math.round(rect.width * dpr));
-      canvas.height = Math.max(1, Math.round(rect.height * dpr));
-      context.setTransform(dpr, 0, 0, dpr, 0, 0);
-      context.imageSmoothingEnabled = false;
-
-      layout = {
-        width: rect.width,
-        height: rect.height,
-        dpr,
-        columns,
-        rows,
-        cellWidth,
-        cellHeight,
-        glyphWidth,
-        glyphHeight,
-        padX,
-        padY,
-      };
-      field = createFluidField(
-        Math.round(columns * 0.8),
-        Math.round(rows * 0.8),
-      );
-      sampleCanvas.width = columns;
-      sampleCanvas.height = rows;
-      atlas = createGlyphAtlas(
-        FONT_SIZE,
-        glyphWidth,
-        glyphHeight,
-        window.getComputedStyle(canvas).color,
-        dpr,
-      );
-      smoothedLuma = new Float32Array(columns * rows);
-      lumaInitialized = false;
-      updateSafeArea();
-    };
-
-    const pointerCoordinates = (event: PointerEvent) => {
-      if (!layout || !field) return null;
-      const rect = canvas.getBoundingClientRect();
-      const localX = event.clientX - rect.left;
-      const localY = event.clientY - rect.top;
+    const startRuntime = (): (() => void) => {
+      canvas.dataset.asciiOverlayState = "disabled";
       if (
-        localX < 0 ||
-        localY < 0 ||
-        localX > rect.width ||
-        localY > rect.height
+        !mediaQuery.matches ||
+        hasConstrainedDeviceHint() ||
+        typeof IntersectionObserver !== "function"
       ) {
-        return null;
+        return () => {};
       }
 
-      return {
-        localX,
-        localY,
-        fieldX: (localX / layout.width) * (field.width - 1),
-        fieldY: (localY / layout.height) * (field.height - 1),
-      };
-    };
-
-    const handlePointerMove = (event: PointerEvent) => {
-      if (!layout || !field) return;
-      const isActivePointer = activePointerId === event.pointerId;
-      if (event.pointerType && event.pointerType !== "mouse" && !isActivePointer) {
-        return;
-      }
-
-      const coordinates = pointerCoordinates(event);
-      if (!coordinates) {
-        previousPointer = null;
-        return;
-      }
-
-      const now = event.timeStamp;
-      const previous = previousPointer;
-      const deltaX = previous ? event.clientX - previous.x : event.movementX || 0;
-      const deltaY = previous ? event.clientY - previous.y : event.movementY || 0;
-      const distance = Math.hypot(deltaX, deltaY);
-      const deltaTime = previous
-        ? clamp((now - previous.time) / 1000, 0.001, 0.05)
-        : 0.016;
-
-      if (
-        isActivePointer &&
-        pointerStart &&
-        Math.hypot(
-          event.clientX - pointerStart.x,
-          event.clientY - pointerStart.y,
-        ) >= 6
-      ) {
-        dragged = true;
-      }
-
-      if (distance > 0) {
-        const scaleX = field.width / layout.width;
-        const scaleY = field.height / layout.height;
-        const dragBoost = isActivePointer && dragged
-          ? Math.min(60, (distance / deltaTime) * 0.03)
-          : 0;
-        const radiusPx = 28 + dragBoost;
-        const radius = radiusPx * Math.min(scaleX, scaleY);
-
-        injectPointer(
-          field,
-          coordinates.fieldX,
-          coordinates.fieldY,
-          (deltaX / deltaTime) * scaleX * 0.5,
-          (deltaY / deltaTime) * scaleY * 0.5,
-          0.9,
-          radius,
-        );
-      }
-
-      previousPointer = { x: event.clientX, y: event.clientY, time: now };
-    };
-
-    const handlePointerDown = (event: PointerEvent) => {
-      if (event.isPrimary === false || !pointerCoordinates(event)) return;
-      activePointerId = event.pointerId;
-      pointerStart = {
-        x: event.clientX,
-        y: event.clientY,
-        time: event.timeStamp,
-      };
-      previousPointer = pointerStart;
-      dragged = false;
-    };
-
-    const handlePointerEnd = (event: PointerEvent) => {
-      if (
-        activePointerId !== event.pointerId ||
-        !layout ||
-        !field
-      ) {
-        return;
-      }
-
-      const wasClick = !dragged;
-      activePointerId = null;
-      pointerStart = null;
-      previousPointer = null;
-      dragged = false;
-      if (!wasClick) return;
-
-      const coordinates = pointerCoordinates(event);
-      if (!coordinates) return;
-      const farthestX = Math.max(coordinates.localX, layout.width - coordinates.localX);
-      const farthestY = Math.max(coordinates.localY, layout.height - coordinates.localY);
-
-      splashes.push({
-        normX: coordinates.fieldX / Math.max(1, field.width - 1),
-        normY: coordinates.fieldY / Math.max(1, field.height - 1),
-        start: performance.now(),
-        seed: Math.random() * 1000,
-        maxRadius: Math.min(184, Math.hypot(farthestX, farthestY)),
-        thickness: 100,
-      });
-    };
-
-    const processSplashes = (now: number, deltaTime: number) => {
-      if (!layout || !field || splashes.length === 0) return;
-
-      const cellWidthPx = layout.width / Math.max(1, field.width - 1);
-      const cellHeightPx = layout.height / Math.max(1, field.height - 1);
-      const surviving: Splash[] = [];
-
-      for (const splash of splashes) {
-        const age = now - splash.start;
-        const travelSpeed = 240 * 3;
-        const duration = (splash.maxRadius / travelSpeed) * 1000;
-        if (age > duration) continue;
-
-        const progress = clamp01(age / duration);
-        const easedProgress = 1 - Math.pow(1 - progress, 2.5);
-        const radius = easedProgress * splash.maxRadius;
-        const remaining = Math.max(0, 1 - progress);
-        const force = 0.5 * 2 * 3 * Math.pow(remaining, 1.2) * 20;
-        const densityAmount =
-          0.12 * Math.pow(remaining, 2) * clamp(deltaTime / 0.01667, 0.5, 2);
-
-        injectRing(
-          field,
-          splash.normX * (field.width - 1),
-          splash.normY * (field.height - 1),
-          force,
-          densityAmount,
-          radius,
-          splash.thickness,
-          0.14,
-          splash.seed,
-          cellWidthPx,
-          cellHeightPx,
-          easedProgress,
-        );
-        surviving.push(splash);
-      }
-
-      splashes.splice(0, splashes.length, ...surviving);
-    };
-
-    const drawVideoFrame = () => {
-      if (video.error) videoUnavailable = true;
-      if (!layout || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
-        if (!videoUnavailable) canvas.dataset.asciiOverlayState = "waiting";
-        return null;
-      }
-
-      const sourceWidth = video.videoWidth;
-      const sourceHeight = video.videoHeight;
-      if (!sourceWidth || !sourceHeight) {
-        canvas.dataset.asciiOverlayState = "waiting";
-        return null;
-      }
-
-      const sourceAspect = sourceWidth / sourceHeight;
-      const destinationAspect = layout.width / layout.height;
-      let sourceX = 0;
-      let sourceY = 0;
-      let cropWidth = sourceWidth;
-      let cropHeight = sourceHeight;
-
-      if (sourceAspect > destinationAspect) {
-        cropWidth = sourceHeight * destinationAspect;
-        sourceX = (sourceWidth - cropWidth) / 2;
-      } else {
-        cropHeight = sourceWidth / destinationAspect;
-        sourceY = (sourceHeight - cropHeight) / 2;
-      }
-
+      let maybeContext: CanvasRenderingContext2D | null = null;
+      let maybeSampleContext: CanvasRenderingContext2D | null = null;
+      const sampleCanvas = document.createElement("canvas");
       try {
+        maybeContext = canvas.getContext("2d");
+        maybeSampleContext = sampleCanvas.getContext("2d", {
+          willReadFrequently: true,
+        });
+      } catch {
+        canvas.dataset.asciiOverlayState = "failed";
+        sampleCanvas.width = 1;
+        sampleCanvas.height = 1;
+        canvas.width = 1;
+        canvas.height = 1;
+        return () => {};
+      }
+      if (!maybeContext || !maybeSampleContext) {
+        canvas.dataset.asciiOverlayState = "failed";
+        sampleCanvas.width = 1;
+        sampleCanvas.height = 1;
+        canvas.width = 1;
+        canvas.height = 1;
+        return () => {};
+      }
+      const context = maybeContext;
+      const sampleContext = maybeSampleContext;
+
+      let layout: GridLayout | null = null;
+      let field: FluidField | null = null;
+      let atlas: GlyphAtlas | null = null;
+      let safeArea: LocalRect | null = null;
+      let smoothedLuma = new Float32Array(0);
+      let lumaInitialized = false;
+      let animationFrame = 0;
+      let lastFrame = 0;
+      let isIntersecting = false;
+      let destroyed = false;
+      let failed = false;
+      let videoRequested = false;
+      let playAttempt = 0;
+      let activePointerId: number | null = null;
+      let pointerStart: Point | null = null;
+      let previousPointer: Point | null = null;
+      let dragged = false;
+      let resizeObserver: ResizeObserver | null = null;
+      let intersectionObserver: IntersectionObserver | null = null;
+      const splashes: Splash[] = [];
+
+      const isActive = () =>
+        !destroyed && !failed && isIntersecting && !document.hidden;
+
+      const resetPointer = () => {
+        activePointerId = null;
+        pointerStart = null;
+        previousPointer = null;
+        dragged = false;
+      };
+
+      const stopAnimation = () => {
+        if (animationFrame) cancelAnimationFrame(animationFrame);
+        animationFrame = 0;
+        lastFrame = 0;
+      };
+
+      const unloadVideo = () => {
+        playAttempt += 1;
+        try {
+          video.pause();
+          video.removeAttribute("src");
+          video.preload = "none";
+          video.load();
+        } catch {
+          // Cleanup must never escape into the React tree.
+        }
+        videoRequested = false;
+      };
+
+      const releaseBuffers = () => {
+        if (atlas) {
+          atlas.canvas.width = 1;
+          atlas.canvas.height = 1;
+        }
+        atlas = null;
+        layout = null;
+        field = null;
+        safeArea = null;
+        smoothedLuma = new Float32Array(0);
+        lumaInitialized = false;
+        splashes.length = 0;
+        sampleCanvas.width = 1;
+        sampleCanvas.height = 1;
+        canvas.width = 1;
+        canvas.height = 1;
+      };
+
+      const updateSafeArea = () => {
+        const safeElement = canvas.parentElement?.querySelector<HTMLElement>(
+          "[data-fluid-safe-area]",
+        );
+        if (!safeElement) {
+          safeArea = null;
+          return;
+        }
+        const canvasRect = canvas.getBoundingClientRect();
+        const elementRect = safeElement.getBoundingClientRect();
+        safeArea = {
+          left: elementRect.left - canvasRect.left,
+          top: elementRect.top - canvasRect.top,
+          right: elementRect.right - canvasRect.left,
+          bottom: elementRect.bottom - canvasRect.top,
+        };
+      };
+
+      const resize = () => {
+        const rect = canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) return;
+
+        const nativeDpr = Math.max(1, window.devicePixelRatio || 1);
+        const dpr = Math.min(
+          nativeDpr,
+          1.5,
+          MAX_BACKBUFFER_SIDE / rect.width,
+          MAX_BACKBUFFER_SIDE / rect.height,
+          Math.sqrt(MAX_BACKBUFFER_PIXELS / (rect.width * rect.height)),
+        );
+        const backWidth = Math.max(
+          1,
+          Math.min(MAX_BACKBUFFER_SIDE, Math.floor(rect.width * dpr)),
+        );
+        const backHeight = Math.max(
+          1,
+          Math.min(MAX_BACKBUFFER_SIDE, Math.floor(rect.height * dpr)),
+        );
+        const snapScale = Math.max(dpr, 0.1);
+        const pixel = 1 / snapScale;
+        const snap = (value: number, minimum = 0) =>
+          Math.max(minimum, Math.round(value * snapScale) / snapScale);
+        const glyphWidth = snap(FONT_SIZE / (5 / 3), pixel);
+        const glyphHeight = snap(FONT_SIZE, pixel);
+        const padX = snap(CELL_PADDING.x);
+        const padY = snap(CELL_PADDING.y);
+        const baseCellWidth = Math.max(pixel, glyphWidth + 2 * padX);
+        const baseCellHeight = Math.max(pixel, glyphHeight + 2 * padY);
+        const rawColumns = Math.max(1, Math.floor(rect.width / baseCellWidth));
+        const rawRows = Math.max(1, Math.floor(rect.height / baseCellHeight));
+        const gridScale = Math.max(
+          1,
+          Math.sqrt((rawColumns * rawRows) / MAX_SAMPLE_CELLS),
+        );
+        const columns = Math.max(
+          1,
+          Math.min(MAX_SAMPLE_CELLS, Math.floor(rawColumns / gridScale)),
+        );
+        const rows = Math.max(
+          1,
+          Math.min(
+            Math.floor(rawRows / gridScale),
+            Math.floor(MAX_SAMPLE_CELLS / columns),
+          ),
+        );
+        const cellWidth = rect.width / columns;
+        const cellHeight = rect.height / rows;
+        const needsAllocation =
+          canvas.width !== backWidth ||
+          canvas.height !== backHeight ||
+          layout?.columns !== columns ||
+          layout?.rows !== rows ||
+          !field ||
+          !atlas;
+
+        if (canvas.width !== backWidth) canvas.width = backWidth;
+        if (canvas.height !== backHeight) canvas.height = backHeight;
+        context.setTransform(
+          backWidth / rect.width,
+          0,
+          0,
+          backHeight / rect.height,
+          0,
+          0,
+        );
+        context.imageSmoothingEnabled = false;
+
+        layout = {
+          width: rect.width,
+          height: rect.height,
+          dpr,
+          columns,
+          rows,
+          cellWidth,
+          cellHeight,
+          glyphWidth,
+          glyphHeight,
+          padX,
+          padY,
+        };
+        if (needsAllocation) {
+          if (atlas) {
+            atlas.canvas.width = 1;
+            atlas.canvas.height = 1;
+          }
+          field = createFluidField(
+            Math.max(1, Math.round(columns * 0.8)),
+            Math.max(1, Math.round(rows * 0.8)),
+          );
+          sampleCanvas.width = columns;
+          sampleCanvas.height = rows;
+          atlas = createGlyphAtlas(
+            FONT_SIZE,
+            glyphWidth,
+            glyphHeight,
+            window.getComputedStyle(canvas).color,
+            dpr,
+          );
+          smoothedLuma = new Float32Array(columns * rows);
+          lumaInitialized = false;
+        }
+        updateSafeArea();
+      };
+
+      const pointerCoordinates = (event: PointerEvent) => {
+        if (!isActive() || !layout || !field) return null;
+        const rect = canvas.getBoundingClientRect();
+        const localX = event.clientX - rect.left;
+        const localY = event.clientY - rect.top;
+        if (
+          localX < 0 ||
+          localY < 0 ||
+          localX > rect.width ||
+          localY > rect.height
+        ) {
+          return null;
+        }
+        return {
+          localX,
+          localY,
+          fieldX: (localX / layout.width) * (field.width - 1),
+          fieldY: (localY / layout.height) * (field.height - 1),
+        };
+      };
+
+      const handlePointerMove = (event: PointerEvent) => {
+        if (!isActive() || !layout || !field) return;
+        const isActivePointer = activePointerId === event.pointerId;
+        if (event.pointerType && event.pointerType !== "mouse" && !isActivePointer) {
+          return;
+        }
+        const coordinates = pointerCoordinates(event);
+        if (!coordinates) {
+          previousPointer = null;
+          return;
+        }
+        const now = event.timeStamp;
+        const previous = previousPointer;
+        const deltaX = previous ? event.clientX - previous.x : event.movementX || 0;
+        const deltaY = previous ? event.clientY - previous.y : event.movementY || 0;
+        const distance = Math.hypot(deltaX, deltaY);
+        const deltaTime = previous
+          ? clamp((now - previous.time) / 1000, 0.001, 0.05)
+          : 0.016;
+        if (
+          isActivePointer &&
+          pointerStart &&
+          Math.hypot(event.clientX - pointerStart.x, event.clientY - pointerStart.y) >= 6
+        ) {
+          dragged = true;
+        }
+        if (distance > 0) {
+          const scaleX = field.width / layout.width;
+          const scaleY = field.height / layout.height;
+          const dragBoost = isActivePointer && dragged
+            ? Math.min(60, (distance / deltaTime) * 0.03)
+            : 0;
+          const radius = (28 + dragBoost) * Math.min(scaleX, scaleY);
+          injectPointer(
+            field,
+            coordinates.fieldX,
+            coordinates.fieldY,
+            (deltaX / deltaTime) * scaleX * 0.5,
+            (deltaY / deltaTime) * scaleY * 0.5,
+            0.9,
+            radius,
+          );
+        }
+        previousPointer = { x: event.clientX, y: event.clientY, time: now };
+      };
+
+      const handlePointerDown = (event: PointerEvent) => {
+        if (!isActive() || event.isPrimary === false || !pointerCoordinates(event)) {
+          return;
+        }
+        activePointerId = event.pointerId;
+        pointerStart = {
+          x: event.clientX,
+          y: event.clientY,
+          time: event.timeStamp,
+        };
+        previousPointer = pointerStart;
+        dragged = false;
+      };
+
+      const handlePointerEnd = (event: PointerEvent) => {
+        if (
+          !isActive() ||
+          activePointerId !== event.pointerId ||
+          !layout ||
+          !field
+        ) {
+          return;
+        }
+        const wasClick = !dragged;
+        resetPointer();
+        if (!wasClick) return;
+        const coordinates = pointerCoordinates(event);
+        if (!coordinates) return;
+        const farthestX = Math.max(
+          coordinates.localX,
+          layout.width - coordinates.localX,
+        );
+        const farthestY = Math.max(
+          coordinates.localY,
+          layout.height - coordinates.localY,
+        );
+        splashes.push({
+          normX: coordinates.fieldX / Math.max(1, field.width - 1),
+          normY: coordinates.fieldY / Math.max(1, field.height - 1),
+          start: performance.now(),
+          seed: Math.random() * 1000,
+          maxRadius: Math.min(184, Math.hypot(farthestX, farthestY)),
+          thickness: 100,
+        });
+      };
+
+      const processSplashes = (now: number, deltaTime: number) => {
+        if (!layout || !field || splashes.length === 0) return;
+        const cellWidthPx = layout.width / Math.max(1, field.width - 1);
+        const cellHeightPx = layout.height / Math.max(1, field.height - 1);
+        const surviving: Splash[] = [];
+        for (const splash of splashes) {
+          const age = now - splash.start;
+          const duration = (splash.maxRadius / (240 * 3)) * 1000;
+          if (age > duration) continue;
+          const progress = clamp01(age / duration);
+          const easedProgress = 1 - Math.pow(1 - progress, 2.5);
+          const remaining = Math.max(0, 1 - progress);
+          injectRing(
+            field,
+            splash.normX * (field.width - 1),
+            splash.normY * (field.height - 1),
+            0.5 * 2 * 3 * Math.pow(remaining, 1.2) * 20,
+            0.12 * Math.pow(remaining, 2) * clamp(deltaTime / 0.01667, 0.5, 2),
+            easedProgress * splash.maxRadius,
+            splash.thickness,
+            0.14,
+            splash.seed,
+            cellWidthPx,
+            cellHeightPx,
+            easedProgress,
+          );
+          surviving.push(splash);
+        }
+        splashes.splice(0, splashes.length, ...surviving);
+      };
+
+      const drawVideoFrame = () => {
+        if (!layout || video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+          return null;
+        }
+        const sourceWidth = video.videoWidth;
+        const sourceHeight = video.videoHeight;
+        if (!sourceWidth || !sourceHeight) return null;
+        const sourceAspect = sourceWidth / sourceHeight;
+        const destinationAspect = layout.width / layout.height;
+        let sourceX = 0;
+        let sourceY = 0;
+        let cropWidth = sourceWidth;
+        let cropHeight = sourceHeight;
+        if (sourceAspect > destinationAspect) {
+          cropWidth = sourceHeight * destinationAspect;
+          sourceX = (sourceWidth - cropWidth) / 2;
+        } else {
+          cropHeight = sourceWidth / destinationAspect;
+          sourceY = (sourceHeight - cropHeight) / 2;
+        }
         sampleContext.drawImage(
           video,
           sourceX,
@@ -730,156 +871,266 @@ export function AsciiFluid({ className }: { className?: string }) {
           layout.columns,
           layout.rows,
         );
-        return sampleContext.getImageData(
-          0,
-          0,
-          layout.columns,
-          layout.rows,
-        ).data;
-      } catch {
-        canvas.dataset.asciiOverlayState = "tainted";
-        return null;
-      }
-    };
+        return sampleContext.getImageData(0, 0, layout.columns, layout.rows).data;
+      };
 
-    const draw = (elapsed: number, deltaTime: number) => {
-      if (!layout || !field || !atlas) return;
-      context.clearRect(0, 0, layout.width, layout.height);
-      const pixels = drawVideoFrame();
-      if (!pixels && !videoUnavailable) return;
-
-      const smoothing = lumaInitialized
-        ? clamp01(1 - Math.exp(-(deltaTime * 1000) / 1000))
-        : 1;
-
-      for (let row = 0; row < layout.rows; row += 1) {
-        const fieldY =
-          layout.rows > 1
-            ? (row / (layout.rows - 1)) * (field.height - 1)
-            : 0;
-        for (let column = 0; column < layout.columns; column += 1) {
-          const fieldX =
-            layout.columns > 1
-              ? (column / (layout.columns - 1)) * (field.width - 1)
+      const draw = (pixels: Uint8ClampedArray, deltaTime: number) => {
+        if (!layout || !field || !atlas) return;
+        context.clearRect(0, 0, layout.width, layout.height);
+        const smoothing = lumaInitialized
+          ? clamp01(1 - Math.exp(-(deltaTime * 1000) / 1000))
+          : 1;
+        for (let row = 0; row < layout.rows; row += 1) {
+          const fieldY =
+            layout.rows > 1
+              ? (row / (layout.rows - 1)) * (field.height - 1)
               : 0;
-          const flow = clamp01(
-            sampleBilinear(
-              field.density,
-              fieldX,
-              fieldY,
-              field.width,
-              field.height,
-            ),
-          );
-          const lumaIndex = fieldIndex(column, row, layout.columns);
-          let targetLuma: number;
-          if (pixels) {
+          for (let column = 0; column < layout.columns; column += 1) {
+            const fieldX =
+              layout.columns > 1
+                ? (column / (layout.columns - 1)) * (field.width - 1)
+                : 0;
+            const flow = clamp01(
+              sampleBilinear(
+                field.density,
+                fieldX,
+                fieldY,
+                field.width,
+                field.height,
+              ),
+            );
+            const lumaIndex = fieldIndex(column, row, layout.columns);
             const pixelIndex = lumaIndex * 4;
-            targetLuma =
+            const targetLuma =
               (0.2126 * pixels[pixelIndex] +
                 0.7152 * pixels[pixelIndex + 1] +
                 0.0722 * pixels[pixelIndex + 2]) /
               255;
-          } else {
-            const noise = hashCell(column, row);
-            const shimmer =
-              0.5 +
-              0.5 *
-                Math.sin(column * 0.09 + row * 0.13 + elapsed * 0.35);
-            targetLuma = clamp01(0.18 + noise * 0.57 + shimmer * 0.25);
+            smoothedLuma[lumaIndex] +=
+              (targetLuma - smoothedLuma[lumaIndex]) * smoothing;
+            const glyphIndex = mapLumaToGlyph(smoothedLuma[lumaIndex] * flow);
+            if (CHARSET[glyphIndex] === " ") continue;
+            const centerX = (column + 0.5) * layout.cellWidth;
+            const centerY = (row + 0.5) * layout.cellHeight;
+            const safeFactor = safeAreaFactor(safeArea, centerX, centerY);
+            if (safeFactor <= 0) continue;
+            context.globalAlpha = safeFactor;
+            context.drawImage(
+              atlas.canvas,
+              glyphIndex * atlas.tileWidth,
+              0,
+              atlas.tileWidth,
+              atlas.tileHeight,
+              column * layout.cellWidth + layout.padX,
+              row * layout.cellHeight + layout.padY,
+              layout.glyphWidth,
+              layout.glyphHeight,
+            );
           }
-          smoothedLuma[lumaIndex] +=
-            (targetLuma - smoothedLuma[lumaIndex]) * smoothing;
-          const glyphIndex = mapLumaToGlyph(smoothedLuma[lumaIndex] * flow);
-          if (CHARSET[glyphIndex] === " ") continue;
-
-          const centerX = (column + 0.5) * layout.cellWidth;
-          const centerY = (row + 0.5) * layout.cellHeight;
-          const safeFactor = safeAreaFactor(safeArea, centerX, centerY);
-          if (safeFactor <= 0) continue;
-
-          context.globalAlpha = safeFactor;
-          context.drawImage(
-            atlas.canvas,
-            glyphIndex * atlas.tileWidth,
-            0,
-            atlas.tileWidth,
-            atlas.tileHeight,
-            column * layout.cellWidth + layout.padX,
-            row * layout.cellHeight + layout.padY,
-            layout.glyphWidth,
-            layout.glyphHeight,
-          );
         }
+        lumaInitialized = true;
+        context.globalAlpha = 1;
+        canvas.dataset.asciiOverlayState = "running";
+      };
+
+      const cleanupListeners = () => {
+        resizeObserver?.disconnect();
+        intersectionObserver?.disconnect();
+        window.removeEventListener("resize", guardedResize);
+        document.removeEventListener("visibilitychange", syncActivity);
+        window.removeEventListener("pointermove", guardedPointerMove);
+        window.removeEventListener("pointerdown", guardedPointerDown);
+        window.removeEventListener("pointerup", guardedPointerEnd);
+        window.removeEventListener("pointercancel", guardedPointerEnd);
+        video.removeEventListener("error", handleVideoError);
+        video.removeEventListener("playing", handleVideoPlaying);
+      };
+
+      const shutdown = (state?: "failed") => {
+        if (destroyed) return;
+        destroyed = true;
+        failed = state === "failed";
+        stopAnimation();
+        resetPointer();
+        cleanupListeners();
+        unloadVideo();
+        releaseBuffers();
+        if (state) canvas.dataset.asciiOverlayState = state;
+      };
+
+      const fail = () => shutdown("failed");
+
+      const render = (now: number) => {
+        animationFrame = 0;
+        if (!isActive()) return;
+        try {
+          if (video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+            canvas.dataset.asciiOverlayState = "waiting";
+            return;
+          }
+          if (now - lastFrame >= 1000 / TARGET_FPS) {
+            const deltaTime = lastFrame
+              ? clamp((now - lastFrame) / 1000, 0.001, 0.1)
+              : 1 / TARGET_FPS;
+            lastFrame = now;
+            const pixels = drawVideoFrame();
+            if (!pixels) {
+              canvas.dataset.asciiOverlayState = "waiting";
+              return;
+            }
+            if (field) {
+              processSplashes(now, deltaTime);
+              stepFluid(field, deltaTime);
+              draw(pixels, deltaTime);
+            }
+          }
+          animationFrame = requestAnimationFrame(render);
+        } catch {
+          fail();
+        }
+      };
+
+      const startAnimation = () => {
+        if (isActive() && !animationFrame) {
+          lastFrame = 0;
+          animationFrame = requestAnimationFrame(render);
+        }
+      };
+
+      function handleVideoPlaying() {
+        if (!isActive()) return;
+        canvas!.dataset.asciiOverlayState = "waiting";
+        startAnimation();
       }
 
-      lumaInitialized = true;
-      context.globalAlpha = 1;
-      canvas.dataset.asciiOverlayState = videoUnavailable
-        ? "fallback"
-        : "running";
-    };
-
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(canvas);
-    const intersectionObserver = new IntersectionObserver(([entry]) => {
-      isIntersecting = entry.isIntersecting;
-    });
-    intersectionObserver.observe(canvas);
-
-    window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    window.addEventListener("pointerdown", handlePointerDown, { passive: true });
-    window.addEventListener("pointerup", handlePointerEnd, { passive: true });
-    window.addEventListener("pointercancel", handlePointerEnd, { passive: true });
-    const handleVideoError = () => {
-      videoUnavailable = true;
-      canvas.dataset.asciiOverlayState = "fallback";
-    };
-    video.addEventListener("error", handleVideoError);
-    if (video.error) handleVideoError();
-    resize();
-    canvas.dataset.asciiOverlayState = "ready";
-
-    const startTime = performance.now();
-    const render = (now: number) => {
-      animationFrame = requestAnimationFrame(render);
-      if (!isIntersecting || now - lastFrame < 1000 / TARGET_FPS) return;
-
-      const deltaTime = lastFrame
-        ? clamp((now - lastFrame) / 1000, 0.001, 0.1)
-        : 1 / TARGET_FPS;
-      lastFrame = now;
-      if (field) {
-        processSplashes(now, deltaTime);
-        stepFluid(field, deltaTime);
-        draw((now - startTime) / 1000, deltaTime);
+      function handleVideoError() {
+        fail();
       }
+
+      const pause = () => {
+        playAttempt += 1;
+        stopAnimation();
+        resetPointer();
+        try {
+          video.pause();
+        } catch {
+          fail();
+          return;
+        }
+        if (!failed) canvas.dataset.asciiOverlayState = "paused";
+      };
+
+      const resume = () => {
+        if (!isActive()) return;
+        try {
+          if (!videoRequested) {
+            videoRequested = true;
+            video.preload = "auto";
+            video.src = VIDEO_SRC;
+            video.load();
+          }
+          canvas.dataset.asciiOverlayState = "waiting";
+          const attempt = ++playAttempt;
+          const playPromise = video.play();
+          if (playPromise) {
+            playPromise.catch(() => {
+              if (!destroyed && attempt === playAttempt && isActive()) fail();
+            });
+          }
+        } catch {
+          fail();
+        }
+      };
+
+      function syncActivity() {
+        if (isActive()) resume();
+        else if (!destroyed) pause();
+      }
+
+      const guardedResize = () => {
+        try {
+          resize();
+        } catch {
+          fail();
+        }
+      };
+      const guardedPointerMove = (event: PointerEvent) => {
+        try {
+          handlePointerMove(event);
+        } catch {
+          fail();
+        }
+      };
+      const guardedPointerDown = (event: PointerEvent) => {
+        try {
+          handlePointerDown(event);
+        } catch {
+          fail();
+        }
+      };
+      const guardedPointerEnd = (event: PointerEvent) => {
+        try {
+          handlePointerEnd(event);
+        } catch {
+          fail();
+        }
+      };
+
+      try {
+        guardedResize();
+        if (destroyed) return () => {};
+        window.addEventListener("pointermove", guardedPointerMove, { passive: true });
+        window.addEventListener("pointerdown", guardedPointerDown, { passive: true });
+        window.addEventListener("pointerup", guardedPointerEnd, { passive: true });
+        window.addEventListener("pointercancel", guardedPointerEnd, { passive: true });
+        video.addEventListener("error", handleVideoError);
+        video.addEventListener("playing", handleVideoPlaying);
+        document.addEventListener("visibilitychange", syncActivity);
+        if (typeof ResizeObserver === "function") {
+          resizeObserver = new ResizeObserver(guardedResize);
+          resizeObserver.observe(canvas);
+        } else {
+          window.addEventListener("resize", guardedResize, { passive: true });
+        }
+        intersectionObserver = new IntersectionObserver(([entry]) => {
+          isIntersecting = Boolean(entry?.isIntersecting);
+          syncActivity();
+        });
+        intersectionObserver.observe(canvas);
+        canvas.dataset.asciiOverlayState = "paused";
+      } catch {
+        shutdown("failed");
+        return () => {};
+      }
+
+      return () => shutdown();
     };
-    animationFrame = requestAnimationFrame(render);
+
+    const syncEligibility = () => {
+      stopRuntime?.();
+      stopRuntime = startRuntime();
+    };
+    const unsubscribeMedia = subscribeMediaQuery(mediaQuery, syncEligibility);
+    connection?.addEventListener?.("change", syncEligibility);
+    syncEligibility();
 
     return () => {
-      cancelAnimationFrame(animationFrame);
-      resizeObserver.disconnect();
-      intersectionObserver.disconnect();
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerdown", handlePointerDown);
-      window.removeEventListener("pointerup", handlePointerEnd);
-      window.removeEventListener("pointercancel", handlePointerEnd);
-      video.removeEventListener("error", handleVideoError);
+      unsubscribeMedia();
+      connection?.removeEventListener?.("change", syncEligibility);
+      stopRuntime?.();
+      stopRuntime = null;
     };
-  }, [reducedMotion]);
+  }, []);
 
   return (
     <div aria-hidden="true" className={className}>
       <video
         ref={videoRef}
-        src={VIDEO_SRC}
         crossOrigin="anonymous"
-        autoPlay
         loop
         muted
         playsInline
-        preload="auto"
+        preload="none"
         /* 背景由 Aurora 极光层提供，视频只取亮度驱动字符，不显示画面 */
         className="hidden"
       />
