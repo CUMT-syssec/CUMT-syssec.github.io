@@ -16,6 +16,8 @@
   margin-bottom: 20px;
   transform: none !important;
   filter: none !important;
+  will-change: auto !important;
+  backface-visibility: visible;
 }
 
 /* 首卡（首屏）保留接近整屏的高度，开屏仍有“一屏”的仪式感 */
@@ -44,9 +46,17 @@
   padding-block: 2rem;
 }
 
-/* 流式模式下没有 Lenis，锚点回归原生滚动，补回平滑 */
-html:has(.scroll-stack-scroller--static) {
-  scroll-behavior: smooth;
+/* 流式页面只由窗口纵向滚动，终端内容不再截住触摸手势。 */
+.scroll-stack-scroller--static .term-body {
+  max-height: none;
+  overflow-y: visible;
+}
+
+/* 流式模式下锚点使用原生滚动；减少动效时保留即时跳转。 */
+@media (prefers-reduced-motion: no-preference) {
+  html:has(.scroll-stack-scroller--static) {
+    scroll-behavior: smooth;
+  }
 }
 
 .scroll-stack-inner {

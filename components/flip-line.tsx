@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import { useReducedMotion } from "motion/react";
+import { useReducedMotion } from "./use-reduced-motion";
 
 /**
  * 文化短句翻牌：进入视口时逐字翻转一次（总时长约 0.7—0.9s），随后静止。
@@ -20,26 +20,39 @@ export function FlipLine({
 
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || reducedMotion || !("IntersectionObserver" in window)) return;
+    if (!el || reducedMotion || typeof IntersectionObserver !== "function") return;
     const chars = [...el.querySelectorAll<HTMLElement>("[data-flip-char]")];
-    chars.forEach((c) => {
-      c.style.opacity = "0";
-      c.style.transform = "rotateX(-92deg)";
-    });
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        chars.forEach((c, i) => {
-          c.style.transition = `transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1) ${i * 60}ms, opacity 0.3s linear ${i * 60}ms`;
-          c.style.transform = "rotateX(0deg)";
-          c.style.opacity = "1";
-        });
-        io.disconnect();
-      },
-      { threshold: 0.6 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
+    let io: IntersectionObserver | null = null;
+    try {
+      io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) return;
+          chars.forEach((c, i) => {
+            c.style.transition = `transform 0.5s cubic-bezier(0.2, 0.6, 0.2, 1) ${i * 60}ms, opacity 0.3s linear ${i * 60}ms`;
+            c.style.transform = "rotateX(0deg)";
+            c.style.opacity = "1";
+          });
+          io?.disconnect();
+        },
+        { threshold: 0.6 },
+      );
+      io.observe(el);
+      chars.forEach((c) => {
+        c.style.opacity = "0";
+        c.style.transform = "rotateX(-92deg)";
+      });
+    } catch {
+      io?.disconnect();
+      return;
+    }
+    return () => {
+      io?.disconnect();
+      chars.forEach((c) => {
+        c.style.opacity = "";
+        c.style.transform = "";
+        c.style.transition = "";
+      });
+    };
   }, [reducedMotion]);
 
   return (

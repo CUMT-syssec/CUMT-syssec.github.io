@@ -2,6 +2,7 @@
 
 import { Renderer, Program, Mesh, Color, Triangle } from 'ogl';
 import { useEffect, useRef } from 'react';
+import { useReducedMotion } from './use-reduced-motion';
 
 import './Aurora.css';
 
@@ -127,90 +128,295 @@ export default function Aurora(props) {
   propsRef.current = props;
 
   const ctnDom = useRef(null);
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     const ctn = ctnDom.current;
     if (!ctn) return;
 
-    const renderer = new Renderer({
-      alpha: true,
-      premultipliedAlpha: true,
-      antialias: true
-    });
-    const gl = renderer.gl;
-    gl.clearColor(0, 0, 0, 0);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
-    gl.canvas.style.backgroundColor = 'transparent';
+    ctn.dataset.auroraState = 'static';
 
-    let program;
+    // A static gradient is cheaper and more reliable for accessibility modes and
+    // old embedded browsers that cannot tell us when this card is off-screen.
+    if (reducedMotion || !('IntersectionObserver' in window)) return;
+
+    const canvas = document.createElement('canvas');
+    const contextAttributes = {
+      alpha: true,
+      depth: false,
+      stencil: false,
+      antialias: false,
+      premultipliedAlpha: true,
+      powerPreference: 'low-power'
+    };
+
+    let renderer = null;
+    let gl = null;
+    let program = null;
+    let geometry = null;
+    let mesh = null;
+    let intersectionObserver = null;
+    let resizeObserver = null;
+    let animateId = 0;
+    let isIntersecting = false;
+    let isFailed = false;
+    let lastFrameTime = -Infinity;
+    let lastCssWidth = 0;
+    let lastCssHeight = 0;
+    let lastRenderWidth = 0;
+    let lastRenderHeight = 0;
+    let cachedStops = null;
+    let cachedStopColors = null;
+    let isTouchDevice = true;
+    try {
+      isTouchDevice = window.matchMedia?.('(pointer: coarse)').matches ||
+        navigator.maxTouchPoints > 0;
+    } catch {
+      // Keep the smaller frame budget when the capability query is unavailable.
+    }
+    const minFrameInterval = isTouchDevice ? 1000 / 30 : 0;
+
+    const stopAnimation = () => {
+      if (animateId) cancelAnimationFrame(animateId);
+      animateId = 0;
+    };
+
+    const removeCanvas = () => {
+      if (canvas.parentNode === ctn) ctn.removeChild(canvas);
+    };
+
+    const disposeGpu = (loseContext = false) => {
+      stopAnimation();
+      // A lost context already released its GPU objects. Calling deletion APIs on
+      // it is both redundant and unreliable in older Android WebViews.
+      if (gl && !gl.isContextLost()) {
+        geometry?.remove();
+        if (program) {
+          gl.deleteShader(program.vertexShader);
+          gl.deleteShader(program.fragmentShader);
+          program.remove();
+        }
+        if (loseContext) gl.getExtension('WEBGL_lose_context')?.loseContext();
+      }
+      geometry = null;
+      program = null;
+      mesh = null;
+      removeCanvas();
+    };
+
+    const failToStatic = (loseContext = false) => {
+      if (isFailed) return;
+      isFailed = true;
+      ctn.dataset.auroraState = 'failed';
+      stopActivity();
+      disposeGpu(loseContext);
+    };
+
+    const handleContextLost = event => {
+      event.preventDefault();
+      failToStatic();
+    };
+
+    const colorsFor = stops => {
+      if (
+        cachedStops &&
+        cachedStops.length === stops.length &&
+        cachedStops.every((stop, index) => stop === stops[index])
+      ) {
+        return cachedStopColors;
+      }
+      cachedStops = [...stops];
+      cachedStopColors = stops.map(hex => {
+        const color = new Color(hex);
+        return [color.r, color.g, color.b];
+      });
+      return cachedStopColors;
+    };
 
     function resize() {
-      if (!ctn) return;
-      const width = ctn.offsetWidth;
-      const height = ctn.offsetHeight;
-      renderer.setSize(width, height);
-      if (program) {
-        program.uniforms.uResolution.value = [width, height];
+      if (!renderer || !program || isFailed) return false;
+      const cssWidth = Math.max(1, Math.round(ctn.clientWidth));
+      const cssHeight = Math.max(1, Math.round(ctn.clientHeight));
+      if (cssWidth === lastCssWidth && cssHeight === lastCssHeight) return false;
+
+      const scale = Math.min(
+        1,
+        2048 / cssWidth,
+        2048 / cssHeight,
+        Math.sqrt(1500000 / (cssWidth * cssHeight))
+      );
+      const renderWidth = Math.max(1, Math.floor(cssWidth * scale));
+      const renderHeight = Math.max(1, Math.floor(cssHeight * scale));
+
+      lastCssWidth = cssWidth;
+      lastCssHeight = cssHeight;
+      if (renderWidth !== lastRenderWidth || renderHeight !== lastRenderHeight) {
+        renderer.setSize(renderWidth, renderHeight);
+        lastRenderWidth = renderWidth;
+        lastRenderHeight = renderHeight;
+        program.uniforms.uResolution.value = [canvas.width, canvas.height];
       }
-    }
-    window.addEventListener('resize', resize);
-
-    const geometry = new Triangle(gl);
-    if (geometry.attributes.uv) {
-      delete geometry.attributes.uv;
+      canvas.style.width = `${cssWidth}px`;
+      canvas.style.height = `${cssHeight}px`;
+      return true;
     }
 
-    const colorStopsArray = colorStops.map(hex => {
-      const c = new Color(hex);
-      return [c.r, c.g, c.b];
-    });
-
-    program = new Program(gl, {
-      vertex: VERT,
-      fragment: FRAG,
-      uniforms: {
-        uTime: { value: 0 },
-        uAmplitude: { value: amplitude },
-        uColorStops: { value: colorStopsArray },
-        uResolution: { value: [ctn.offsetWidth, ctn.offsetHeight] },
-        uBlend: { value: blend },
-        uLightMode: { value: lightMode ? 1 : 0 }
-      }
-    });
-
-    const mesh = new Mesh(gl, { geometry, program });
-    ctn.appendChild(gl.canvas);
-
-    let animateId = 0;
-    const update = t => {
-      animateId = requestAnimationFrame(update);
+    const draw = t => {
+      if (!renderer || !program || !mesh || isFailed) return;
       const { time = t * 0.01, speed = 1.0 } = propsRef.current;
       program.uniforms.uTime.value = time * speed * 0.1;
       program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
       program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
       program.uniforms.uLightMode.value = (propsRef.current.lightMode ?? lightMode) ? 1 : 0;
       const stops = propsRef.current.colorStops ?? colorStops;
-      program.uniforms.uColorStops.value = stops.map(hex => {
-        const c = new Color(hex);
-        return [c.r, c.g, c.b];
-      });
+      program.uniforms.uColorStops.value = colorsFor(stops);
       renderer.render({ scene: mesh });
     };
-    animateId = requestAnimationFrame(update);
 
-    resize();
+    const shouldAnimate = () =>
+      !isFailed && isIntersecting && !document.hidden;
+
+    const update = t => {
+      animateId = 0;
+      if (!shouldAnimate()) return;
+      if (t - lastFrameTime >= minFrameInterval) {
+        try {
+          draw(t);
+          lastFrameTime = t;
+        } catch {
+          failToStatic(true);
+          return;
+        }
+      }
+      animateId = requestAnimationFrame(update);
+    };
+
+    const syncAnimation = () => {
+      if (!shouldAnimate()) {
+        if (animateId) cancelAnimationFrame(animateId);
+        animateId = 0;
+        if (!isFailed) ctn.dataset.auroraState = 'paused';
+        return;
+      }
+      ctn.dataset.auroraState = 'running';
+      if (!animateId) animateId = requestAnimationFrame(update);
+    };
+
+    const handleResize = () => {
+      try {
+        resize();
+      } catch {
+        failToStatic(true);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      syncAnimation();
+    };
+
+    function stopActivity() {
+      stopAnimation();
+      isIntersecting = false;
+      intersectionObserver?.disconnect();
+      resizeObserver?.disconnect();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('resize', handleResize);
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
+    }
+
+    try {
+      // OGL silently falls back to WebGL 1, but these shaders require GLSL 300.
+      // Probe WebGL 2 on the exact canvas that OGL will own and stop early if it
+      // is unavailable instead of allowing a later requestAnimationFrame crash.
+      gl = canvas.getContext('webgl2', contextAttributes);
+      if (!gl) {
+        ctn.dataset.auroraState = 'static';
+        return;
+      }
+
+      renderer = new Renderer({
+        canvas,
+        webgl: 2,
+        ...contextAttributes
+      });
+      if (!renderer.isWebgl2 || renderer.gl !== gl) throw new Error('WebGL 2 unavailable');
+
+      gl.clearColor(0, 0, 0, 0);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+      canvas.style.backgroundColor = 'transparent';
+
+      geometry = new Triangle(gl);
+      if (geometry.attributes.uv) delete geometry.attributes.uv;
+
+      program = new Program(gl, {
+        vertex: VERT,
+        fragment: FRAG,
+        transparent: true,
+        cullFace: false,
+        depthTest: false,
+        depthWrite: false,
+        uniforms: {
+          uTime: { value: 0 },
+          uAmplitude: { value: amplitude },
+          uColorStops: { value: colorsFor(colorStops) },
+          uResolution: { value: [1, 1] },
+          uBlend: { value: blend },
+          uLightMode: { value: lightMode ? 1 : 0 }
+        }
+      });
+      if (
+        !gl.getShaderParameter(program.vertexShader, gl.COMPILE_STATUS) ||
+        !gl.getShaderParameter(program.fragmentShader, gl.COMPILE_STATUS) ||
+        !gl.getProgramParameter(program.program, gl.LINK_STATUS)
+      ) {
+        throw new Error('Aurora shader compilation failed');
+      }
+
+      mesh = new Mesh(gl, { geometry, program });
+      canvas.addEventListener('webglcontextlost', handleContextLost);
+      ctn.appendChild(canvas);
+
+      intersectionObserver = new IntersectionObserver(([entry]) => {
+        isIntersecting = entry.isIntersecting;
+        syncAnimation();
+      });
+      intersectionObserver.observe(ctn);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      if ('ResizeObserver' in window) {
+        resizeObserver = new ResizeObserver(handleResize);
+        resizeObserver.observe(ctn);
+      } else {
+        window.addEventListener('resize', handleResize);
+      }
+
+      resize();
+      ctn.dataset.auroraState = 'paused';
+    } catch {
+      // Releasing the context also cleans up objects from a constructor that
+      // threw before it could return an OGL wrapper for explicit disposal.
+      failToStatic(true);
+    }
 
     return () => {
-      cancelAnimationFrame(animateId);
-      window.removeEventListener('resize', resize);
-      if (ctn && gl.canvas.parentNode === ctn) {
-        ctn.removeChild(gl.canvas);
-      }
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      stopActivity();
+      disposeGpu(true);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [amplitude, blend, lightMode]);
+  }, [reducedMotion]);
 
-  return <div ref={ctnDom} className="aurora-container" />;
+  return (
+    <div
+      ref={ctnDom}
+      className="aurora-container"
+      data-aurora-state="static"
+      data-light-mode={lightMode ? 'true' : 'false'}
+      style={{
+        '--aurora-color-1': colorStops[0],
+        '--aurora-color-2': colorStops[1],
+        '--aurora-color-3': colorStops[2]
+      }}
+    />
+  );
 }

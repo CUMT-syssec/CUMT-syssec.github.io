@@ -1,7 +1,7 @@
 "use client";
 
 import { useLayoutEffect, useRef } from "react";
-import { useReducedMotion } from "motion/react";
+import { useReducedMotion } from "./use-reduced-motion";
 
 /**
  * 轻入场：默认可见，动效只是增强。
@@ -23,21 +23,32 @@ export function Reveal({
 
   useLayoutEffect(() => {
     const el = ref.current;
-    if (!el || reducedMotion || !("IntersectionObserver" in window)) return;
-    el.style.opacity = "0";
-    el.style.transform = "translateY(10px)";
-    const io = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry.isIntersecting) return;
-        el.style.transition = `opacity 0.5s ease-out ${delay}ms, transform 0.5s ease-out ${delay}ms`;
-        el.style.opacity = "1";
-        el.style.transform = "none";
-        io.disconnect();
-      },
-      { rootMargin: "0px 0px -8% 0px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
+    if (!el || reducedMotion || typeof IntersectionObserver !== "function") return;
+    let io: IntersectionObserver | null = null;
+    try {
+      io = new IntersectionObserver(
+        ([entry]) => {
+          if (!entry.isIntersecting) return;
+          el.style.transition = `opacity 0.5s ease-out ${delay}ms, transform 0.5s ease-out ${delay}ms`;
+          el.style.opacity = "1";
+          el.style.transform = "none";
+          io?.disconnect();
+        },
+        { rootMargin: "0px 0px -8% 0px" },
+      );
+      io.observe(el);
+      el.style.opacity = "0";
+      el.style.transform = "translateY(10px)";
+    } catch {
+      io?.disconnect();
+      return;
+    }
+    return () => {
+      io?.disconnect();
+      el.style.opacity = "";
+      el.style.transform = "";
+      el.style.transition = "";
+    };
   }, [delay, reducedMotion]);
 
   return (

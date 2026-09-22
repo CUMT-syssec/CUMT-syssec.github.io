@@ -8,7 +8,11 @@ import {
   type ReactNode,
 } from "react";
 import Lenis from "lenis";
-import { useReducedMotion } from "motion/react";
+import {
+  STATIC_LAYOUT_QUERY,
+  subscribeMediaQuery,
+  supportsAnimatedLayout,
+} from "@/lib/motion-support";
 import "./scroll-stack.css";
 
 /**
@@ -78,21 +82,31 @@ export default function ScrollStack({
     new Map<number, { translateY: number; scale: number; rotation: number; blur: number }>(),
   );
   const isUpdatingRef = useRef(false);
-  const reducedMotion = useReducedMotion();
-  const [isCompact, setIsCompact] = useState(false);
+  // SSR 与 hydration 首帧默认采用完整静态流；确认当前浏览器确实支持后，
+  // 桌面端才启用叠卡。脚本失败或旧引擎无法 hydrate 时内容仍可正常滚动。
+  const [isCompact, setIsCompact] = useState(true);
 
-  // 手机端（窄屏）退化为自然文档流：钉住牌组 + 卡内滚动在触摸下会互相截住，
+  // 窄屏和触屏（包括横屏手机）使用自然文档流：钉住牌组 + 卡内滚动会互相截住，
   // 窄屏内容又普遍超高（单列），滑动体验必然冲突。useLayoutEffect 在绘制前
   // 完成 matchMedia 判定，移动端首帧即流式、无闪烁，SSR 输出保持一致。
   useLayoutEffect(() => {
-    const mq = window.matchMedia("(max-width: 767px)");
-    const update = () => setIsCompact(mq.matches);
+    if (typeof window.matchMedia !== "function") {
+      setIsCompact(true);
+      return;
+    }
+    let mq: MediaQueryList;
+    try {
+      mq = window.matchMedia(STATIC_LAYOUT_QUERY);
+    } catch {
+      setIsCompact(true);
+      return;
+    }
+    const update = () => setIsCompact(!supportsAnimatedLayout());
     update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
+    return subscribeMediaQuery(mq, update);
   }, []);
 
-  const flowMode = reducedMotion === true || isCompact;
+  const flowMode = isCompact;
 
   const calculateProgress = useCallback(
     (scrollTop: number, start: number, end: number) => {
@@ -245,12 +259,41 @@ export default function ScrollStack({
 
   useLayoutEffect(() => {
     const scroller = scrollerRef.current;
-    if (!scroller || flowMode) return;
+    // 同步能力检查不能只依赖上一个 effect 的 setState：同一轮 layout
+    // effects 仍可能看到旧状态，并在受限 WebView 中误建 Lenis 后直接白屏。
+    if (!scroller || flowMode || !supportsAnimatedLayout()) return;
 
     const cards = Array.from(document.querySelectorAll<HTMLElement>(
       ".scroll-stack-card",
     ));
     cardsRef.current = cards;
+
+    let lenis: Lenis;
+    try {
+      lenis = new Lenis({
+        duration: 1.2,
+        easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+        smoothWheel: true,
+        touchMultiplier: 2,
+        wheelMultiplier: 1,
+        lerp: 0.1,
+        infinite: false,
+        syncTouch: true,
+        syncTouchLerp: 0.075,
+        // 减少动效由外层统一媒体查询处理。关闭 Lenis 内部重复监听，避免其
+        // 在仅支持 MediaQueryList.addListener 的旧 WebView 中调用现代 API。
+        respectReducedMotion: false,
+        // 内容真放不下的卡片允许原生卡内滚动；滚到边界后交回窗口滚动推进牌组。
+        // 注意不要用 data-lenis-prevent：那会无条件吞掉滚轮事件，导致屏幕中间完全滚不动。
+        allowNestedScroll: true,
+      });
+    } catch {
+      // 某些内嵌 WebView 暴露了 API 却无法正常构造观察器。保留完整内容，
+      // 下一次同步渲染切换到自然文档流。
+      setIsCompact(true);
+      cardsRef.current = [];
+      return;
+    }
 
     cards.forEach((card, i) => {
       if (i < cards.length - 1) {
@@ -261,20 +304,6 @@ export default function ScrollStack({
       card.style.backfaceVisibility = "hidden";
     });
 
-    const lenis = new Lenis({
-      duration: 1.2,
-      easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothWheel: true,
-      touchMultiplier: 2,
-      wheelMultiplier: 1,
-      lerp: 0.1,
-      infinite: false,
-      syncTouch: true,
-      syncTouchLerp: 0.075,
-      // 内容真放不下的卡片允许原生卡内滚动；滚到边界后交回窗口滚动推进牌组。
-      // 注意不要用 data-lenis-prevent：那会无条件吞掉滚轮事件，导致屏幕中间完全滚不动。
-      allowNestedScroll: true,
-    });
     lenis.on("scroll", updateCardTransforms);
     lenisRef.current = lenis;
 
@@ -287,7 +316,14 @@ export default function ScrollStack({
       if (!(anchor instanceof HTMLAnchorElement)) return;
       const hash = anchor.getAttribute("href");
       if (!hash || hash === "#") return;
-      const target = document.querySelector(hash);
+      let id: string;
+      try {
+        id = decodeURIComponent(hash.slice(1));
+      } catch {
+        // 无效百分号编码交回浏览器处理，不能让点击处理器抛异常。
+        return;
+      }
+      const target = document.getElementById(id);
       if (!target) return;
       event.preventDefault();
       history.pushState(null, "", hash);
@@ -301,17 +337,34 @@ export default function ScrollStack({
       lenis.raf(time);
       animationFrameRef.current = requestAnimationFrame(raf);
     };
-    animationFrameRef.current = requestAnimationFrame(raf);
+    const stopRaf = () => {
+      if (animationFrameRef.current === null) return;
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    };
+    const startRaf = () => {
+      if (animationFrameRef.current !== null || document.hidden) return;
+      animationFrameRef.current = requestAnimationFrame(raf);
+    };
+    const syncVisibility = () => {
+      if (document.hidden) stopRaf();
+      else startRaf();
+    };
+    startRaf();
+    document.addEventListener("visibilitychange", syncVisibility);
+    window.addEventListener("pagehide", stopRaf);
+    window.addEventListener("pageshow", startRaf);
 
     const onResize = () => updateCardTransforms();
     window.addEventListener("resize", onResize);
     updateCardTransforms();
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
+      stopRaf();
       window.removeEventListener("resize", onResize);
+      document.removeEventListener("visibilitychange", syncVisibility);
+      window.removeEventListener("pagehide", stopRaf);
+      window.removeEventListener("pageshow", startRaf);
       document.removeEventListener("click", handleAnchorClick);
       lenis.destroy();
       lenisRef.current = null;

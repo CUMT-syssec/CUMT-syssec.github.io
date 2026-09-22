@@ -1,7 +1,7 @@
 "use client";
 
-import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { useReducedMotion } from "./use-reduced-motion";
 
 /**
  * 交替词翻转（React Bits ContainerTextFlip 的站点适配版）：
@@ -22,20 +22,61 @@ export function TextFlip({
   const id = useId();
   const reducedMotion = useReducedMotion();
   const [index, setIndex] = useState(0);
+  const containerRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (reducedMotion) return;
-    const timer = setInterval(
-      () => setIndex((prev) => (prev + 1) % words.length),
-      interval,
-    );
-    return () => clearInterval(timer);
+    const container = containerRef.current;
+    if (
+      !container || reducedMotion || words.length <= 1 ||
+      typeof IntersectionObserver !== "function"
+    ) return;
+
+    let timer: ReturnType<typeof setInterval> | undefined;
+    let isIntersecting = false;
+
+    const syncTimer = () => {
+      const shouldRun = isIntersecting && !document.hidden;
+      if (!shouldRun) {
+        if (timer) clearInterval(timer);
+        timer = undefined;
+        return;
+      }
+      if (!timer) {
+        timer = setInterval(
+          () => setIndex((prev) => (prev + 1) % words.length),
+          interval,
+        );
+      }
+    };
+
+    let intersectionObserver: IntersectionObserver | null = null;
+    try {
+      intersectionObserver = new IntersectionObserver(([entry]) => {
+        isIntersecting = entry.isIntersecting;
+        syncTimer();
+      });
+      intersectionObserver.observe(container);
+    } catch {
+      intersectionObserver?.disconnect();
+      if (timer) clearInterval(timer);
+      return;
+    }
+    document.addEventListener("visibilitychange", syncTimer);
+    syncTimer();
+
+    return () => {
+      if (timer) clearInterval(timer);
+      intersectionObserver?.disconnect();
+      document.removeEventListener("visibilitychange", syncTimer);
+    };
   }, [words, interval, reducedMotion]);
 
-  const word = words[index] ?? "";
+  const visibleIndex = reducedMotion ? 0 : index;
+  const word = words[visibleIndex] ?? "";
 
   return (
     <span
+      ref={containerRef}
       className={`inline-flex flex-col items-center gap-2 ${className ?? ""}`}
     >
       <span
@@ -43,15 +84,13 @@ export function TextFlip({
         className="inline-block font-mono text-base font-semibold whitespace-nowrap text-brand md:text-lg"
       >
         {word.split("").map((letter, i) => (
-          <motion.span
+          <span
             key={`${id}-${word}-${i}`}
-            initial={{ opacity: 0, filter: "blur(8px)" }}
-            animate={{ opacity: 1, filter: "blur(0px)" }}
-            transition={{ delay: i * 0.025, duration: 0.3 }}
-            className="inline-block"
+            style={reducedMotion ? undefined : { animationDelay: `${i * 25}ms` }}
+            className={`inline-block${reducedMotion ? "" : " text-flip-letter"}`}
           >
             {letter}
-          </motion.span>
+          </span>
         ))}
       </span>
 
@@ -61,7 +100,7 @@ export function TextFlip({
           <span
             key={w}
             className={`h-1 w-1 rounded-full transition-colors duration-300 ${
-              i === index ? "bg-brand/60" : "bg-ink/10"
+              i === visibleIndex ? "bg-brand/60" : "bg-ink/10"
             }`}
           />
         ))}

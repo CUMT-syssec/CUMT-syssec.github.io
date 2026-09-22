@@ -1,4 +1,43 @@
 .aurora-container {
   width: 100%;
   height: 100%;
+  overflow: hidden;
+  background: linear-gradient(118deg, #b4cef0, #eaf4f3 48%, #d4c5f6);
+  background:
+    radial-gradient(
+      ellipse 85% 65% at 50% 12%,
+      color-mix(in srgb, var(--aurora-color-2, #ddeeed) 68%, transparent),
+      transparent 72%
+    ),
+    linear-gradient(
+      118deg,
+      color-mix(in srgb, var(--aurora-color-1, #0561d1) 30%, white),
+      color-mix(in srgb, var(--aurora-color-2, #ddeeed) 52%, white) 48%,
+      color-mix(in srgb, var(--aurora-color-3, #5227ff) 24%, white)
+    );
+}
+
+.aurora-container[data-light-mode="false"] {
+  background: linear-gradient(
+    118deg,
+    var(--aurora-color-1, #5227ff),
+    var(--aurora-color-3, #5227ff)
+  );
+  background:
+    radial-gradient(
+      ellipse 85% 65% at 50% 12%,
+      color-mix(in srgb, var(--aurora-color-2, #7cff67) 55%, transparent),
+      transparent 72%
+    ),
+    linear-gradient(
+      118deg,
+      color-mix(in srgb, var(--aurora-color-1, #5227ff) 78%, black),
+      color-mix(in srgb, var(--aurora-color-3, #5227ff) 72%, black)
+    );
+}
+
+.aurora-container canvas {
+  display: block;
+  max-width: none;
+  pointer-events: none;
 }
