@@ -1,4 +1,5 @@
 import { site } from "@/content/site";
+import { announcement } from "@/content/announcement";
 import { teachers } from "@/content/teachers";
 import { outcomeCohorts, internshipOrgIds } from "@/content/outcomes";
 import { organizations } from "@/content/organizations";
@@ -13,6 +14,7 @@ import { validateContent } from "./validate";
  */
 validateContent({
   site,
+  announcement,
   teachers,
   outcomeCohorts,
   internshipOrgIds,
@@ -24,6 +26,7 @@ validateContent({
 
 export {
   site,
+  announcement,
   teachers,
   outcomeCohorts,
   internshipOrgIds,

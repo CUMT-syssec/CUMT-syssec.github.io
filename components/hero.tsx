@@ -11,7 +11,7 @@ import { TextFlip } from "./text-flip";
  */
 export function Hero({ site }: { site: SiteInfo }) {
   return (
-    <section className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-6 text-center text-ink">
+    <section id="home" className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-6 text-center text-ink">
       {/* Aurora 极光背景：#0561D1 深蓝 / #ddeeed 浅薄荷 / #5227FF 紫罗兰。
           裁剪器自带合成层（translateZ）：缩放中卡片的圆角才能切实裁掉 WebGL 画布，
           否则合成子层会穿出 border-radius，把角画成直角。 */}

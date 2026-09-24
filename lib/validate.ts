@@ -6,6 +6,7 @@ import type {
   Teacher,
   CultureContent,
   CohortOutcomes,
+  Announcement,
 } from "./types";
 
 const URL_RE = /^https:\/\/[^\s]+$/;
@@ -20,6 +21,7 @@ function checkLink(href: string, where: string, problems: string[]) {
 
 export function validateContent(data: {
   site: SiteInfo;
+  announcement: Announcement;
   teachers: Teacher[];
   outcomeCohorts: CohortOutcomes[];
   internshipOrgIds: string[];
@@ -31,6 +33,7 @@ export function validateContent(data: {
   const problems: string[] = [];
   const {
     site,
+    announcement,
     teachers,
     outcomeCohorts,
     internshipOrgIds,
@@ -52,6 +55,21 @@ export function validateContent(data: {
   site.footerLinks.forEach((l, i) =>
     checkLink(l.href, `site.footerLinks[${i}]`, problems),
   );
+
+  // 首页喜报
+  if (!announcement.title.trim()) problems.push("喜报标题为空");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(announcement.publishedAt))
+    problems.push("喜报发布日期格式错误");
+  if (!announcement.statusNote.trim()) problems.push("喜报状态注释为空");
+  if (announcement.results.length === 0) problems.push("喜报结果为空");
+  const announcementNames = new Set<string>();
+  for (const result of announcement.results) {
+    if (!result.name.trim() || !result.school.trim())
+      problems.push("喜报条目缺少姓名或学校");
+    if (announcementNames.has(result.name))
+      problems.push(`喜报姓名重复: ${result.name}`);
+    announcementNames.add(result.name);
+  }
 
   // 教师
   const teacherIds = new Set<string>();

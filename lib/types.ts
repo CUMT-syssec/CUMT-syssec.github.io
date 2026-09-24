@@ -31,6 +31,14 @@ export interface ExternalLink {
   href: string;
 }
 
+/** 首页喜报；所有条目均为拟录取，正式去向仍以实际就读为准。 */
+export interface Announcement {
+  title: string;
+  publishedAt: string;
+  statusNote: string;
+  results: { name: string; school: string }[];
+}
+
 /** 教师 */
 export interface Teacher {
   id: string;
