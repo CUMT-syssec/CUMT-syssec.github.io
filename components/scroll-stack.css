@@ -20,23 +20,39 @@
   backface-visibility: visible;
 }
 
-/* 首卡（首屏）保留接近整屏的高度，开屏仍有“一屏”的仪式感 */
-.scroll-stack-scroller--static .scroll-stack-card:first-child {
+.scroll-stack-scroller--static .site-slide {
+  height: auto;
+  min-height: 0;
+}
+
+/* 喜报和欢迎区都保留接近整屏的高度，不依赖卡片顺序。
+   height:auto 时子 section 的 h-full 无法解析，用 flex 撑满封面；
+   内容超高时卡片仍可自然增高，交给窗口滚动。 */
+.scroll-stack-scroller--static .site-slide--cover {
   min-height: 92svh;
-  /* 卡高由 min-height 撑出、height 是 auto，首屏 section 的 h-full 无法解析，
-     会塌缩成内容条（Aurora 只刷一条、向下了解 浮到内容下方）——
-     改让首卡做 flex 列容器，首屏 section 用 flex:1 吃满整卡 */
   display: flex;
   flex-direction: column;
 }
 
-.scroll-stack-scroller--static .scroll-stack-card:first-child > :first-child {
+.scroll-stack-scroller--static .site-slide--cover > section {
   flex: 1;
 }
 
-.scroll-stack-scroller--static .site-slide {
-  height: auto;
-  min-height: 0;
+/* 流式封面的链接参与排版，横屏、长文案和放大字体时也不会压住正文。 */
+.scroll-stack-scroller--static .hero {
+  gap: 2rem;
+  padding-block: 3rem;
+}
+
+.scroll-stack-scroller--static .hero-content {
+  margin-block: auto;
+}
+
+.scroll-stack-scroller--static .hero-scroll-link {
+  /* 保留定位层级，让链接绘制在绝对定位的背景之上并接收点击。 */
+  position: relative;
+  bottom: auto;
+  flex-shrink: 0;
 }
 
 .scroll-stack-scroller--static .site-slide-body {

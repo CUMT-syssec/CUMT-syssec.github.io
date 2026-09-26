@@ -33,11 +33,11 @@ export default function Home() {
     <main id="top">
       <ViewToggle active="human" />
       <ScrollStack>
-        <ScrollStackItem itemClassName="site-slide site-slide--paper">
+        <ScrollStackItem itemClassName="site-slide site-slide--paper site-slide--cover">
           <Announcement content={announcement} />
         </ScrollStackItem>
 
-        <ScrollStackItem itemClassName="site-slide site-slide--paper">
+        <ScrollStackItem itemClassName="site-slide site-slide--paper site-slide--cover">
           <Hero site={site} />
         </ScrollStackItem>
 
