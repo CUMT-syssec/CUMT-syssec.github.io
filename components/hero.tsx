@@ -11,7 +11,7 @@ import { TextFlip } from "./text-flip";
  */
 export function Hero({ site }: { site: SiteInfo }) {
   return (
-    <section id="home" className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-6 text-center text-ink">
+    <section id="home" className="hero relative flex h-full w-full flex-col items-center justify-center overflow-hidden px-6 text-center text-ink">
       {/* Aurora 极光背景：#0561D1 深蓝 / #ddeeed 浅薄荷 / #5227FF 紫罗兰。
           裁剪器自带合成层（translateZ）：缩放中卡片的圆角才能切实裁掉 WebGL 画布，
           否则合成子层会穿出 border-radius，把角画成直角。 */}
@@ -30,7 +30,7 @@ export function Hero({ site }: { site: SiteInfo }) {
 
       <div
         data-fluid-safe-area
-        className="relative mx-auto w-full max-w-[1200px]"
+        className="hero-content relative mx-auto w-full max-w-[1200px]"
       >
         {/* 终端待输入样式：细光标悬挂在解密文案词尾（不占布局、不破坏居中），
             解密过程即光标前逐字敲入；完成 后光标继续闪烁等待输入。 */}
@@ -58,7 +58,7 @@ export function Hero({ site }: { site: SiteInfo }) {
 
       <a
         href="#directions"
-        className="absolute bottom-12 inline-flex items-center gap-2 text-sm text-body transition-colors hover:text-accent"
+        className="hero-scroll-link absolute bottom-12 inline-flex items-center gap-2 text-sm text-body transition-colors hover:text-accent"
       >
         向下了解
         <svg
